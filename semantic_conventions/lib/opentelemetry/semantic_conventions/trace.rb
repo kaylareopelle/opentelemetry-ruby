@@ -54,14 +54,24 @@ module OpenTelemetry
       # @note When setting this to an SQL keyword, it is not recommended to attempt any client-side parsing of `db.statement` just to get this property, but it should be set if the operation name is provided by the library being instrumented. If the SQL statement has an ambiguous operation, or performs more than one operation, this value may be omitted
       DB_OPERATION = 'db.operation'
 
-      # Remote hostname or similar, see note below
+      # Name of the database host
+      # @note `net.peer.name` SHOULD NOT be set if capturing it would require an extra DNS lookup
       NET_PEER_NAME = 'net.peer.name'
 
-      # Remote address of the peer (dotted decimal for IPv4 or [RFC5952](https://tools.ietf.org/html/rfc5952) for IPv6)
-      NET_PEER_IP = 'net.peer.ip'
-
-      # Remote port number
+      # Logical remote port number
       NET_PEER_PORT = 'net.peer.port'
+
+      # Remote socket peer address: IPv4 or IPv6 for internet protocols, path for local communication, [etc](https://man7.org/linux/man-pages/man7/address_families.7.html)
+      NET_SOCK_PEER_ADDR = 'net.sock.peer.addr'
+
+      # Remote socket peer port
+      NET_SOCK_PEER_PORT = 'net.sock.peer.port'
+
+      # Protocol [address family](https://man7.org/linux/man-pages/man7/address_families.7.html) which is used for communication
+      NET_SOCK_FAMILY = 'net.sock.family'
+
+      # Remote socket peer name
+      NET_SOCK_PEER_NAME = 'net.sock.peer.name'
 
       # Transport protocol used. See note below
       NET_TRANSPORT = 'net.transport'
@@ -160,20 +170,6 @@ module OpenTelemetry
       # HTTP request method
       HTTP_METHOD = 'http.method'
 
-      # Full HTTP request URL in the form `scheme://host[:port]/path?query[#fragment]`. Usually the fragment is not transmitted over HTTP, but if it is known, it should be included nevertheless
-      # @note `http.url` MUST NOT contain credentials passed via URL in form of `https://username:password@www.example.com/`. In such case the attribute's value should be `https://www.example.com/`
-      HTTP_URL = 'http.url'
-
-      # The full request target as passed in a HTTP request line or equivalent
-      HTTP_TARGET = 'http.target'
-
-      # The value of the [HTTP host header](https://tools.ietf.org/html/rfc7230#section-5.4). An empty Host header should also be reported, see note
-      # @note When the header is present but empty the attribute SHOULD be set to the empty string. Note that this is a valid situation that is expected in certain cases, according the aforementioned [section of RFC 7230](https://tools.ietf.org/html/rfc7230#section-5.4). When the header is not set the attribute MUST NOT be set
-      HTTP_HOST = 'http.host'
-
-      # The URI scheme identifying the used protocol
-      HTTP_SCHEME = 'http.scheme'
-
       # [HTTP response status code](https://tools.ietf.org/html/rfc7231#section-6)
       HTTP_STATUS_CODE = 'http.status_code'
 
@@ -181,53 +177,72 @@ module OpenTelemetry
       # @note If `net.transport` is not specified, it can be assumed to be `IP.TCP` except if `http.flavor` is `QUIC`, in which case `IP.UDP` is assumed
       HTTP_FLAVOR = 'http.flavor'
 
-      # Value of the [HTTP User-Agent](https://tools.ietf.org/html/rfc7231#section-5.5.3) header sent by the client
+      # Value of the [HTTP User-Agent](https://www.rfc-editor.org/rfc/rfc9110.html#field.user-agent) header sent by the client
       HTTP_USER_AGENT = 'http.user_agent'
 
-      # The size of the request payload body in bytes. This is the number of bytes transferred excluding headers and is often, but not always, present as the [Content-Length](https://tools.ietf.org/html/rfc7230#section-3.3.2) header. For requests using transport encoding, this should be the compressed size
+      # The size of the request payload body in bytes. This is the number of bytes transferred excluding headers and is often, but not always, present as the [Content-Length](https://www.rfc-editor.org/rfc/rfc9110.html#field.content-length) header. For requests using transport encoding, this should be the compressed size
       HTTP_REQUEST_CONTENT_LENGTH = 'http.request_content_length'
 
-      # The size of the uncompressed request payload body after transport decoding. Not set if transport encoding not used
-      HTTP_REQUEST_CONTENT_LENGTH_UNCOMPRESSED = 'http.request_content_length_uncompressed'
-
-      # The size of the response payload body in bytes. This is the number of bytes transferred excluding headers and is often, but not always, present as the [Content-Length](https://tools.ietf.org/html/rfc7230#section-3.3.2) header. For requests using transport encoding, this should be the compressed size
+      # The size of the response payload body in bytes. This is the number of bytes transferred excluding headers and is often, but not always, present as the [Content-Length](https://www.rfc-editor.org/rfc/rfc9110.html#field.content-length) header. For requests using transport encoding, this should be the compressed size
       HTTP_RESPONSE_CONTENT_LENGTH = 'http.response_content_length'
 
-      # The size of the uncompressed response payload body after transport decoding. Not set if transport encoding not used
-      HTTP_RESPONSE_CONTENT_LENGTH_UNCOMPRESSED = 'http.response_content_length_uncompressed'
+      # The URI scheme identifying the used protocol
+      HTTP_SCHEME = 'http.scheme'
 
-      # The ordinal number of request re-sending attempt
-      HTTP_RETRY_COUNT = 'http.retry_count'
+      # The full request target as passed in a HTTP request line or equivalent
+      HTTP_TARGET = 'http.target'
 
-      # The primary server name of the matched virtual host. This should be obtained via configuration. If no such configuration can be obtained, this attribute MUST NOT be set ( `net.host.name` should be used instead)
-      # @note `http.url` is usually not readily available on the server side but would have to be assembled in a cumbersome and sometimes lossy process from other information (see e.g. open-telemetry/opentelemetry-python/pull/148). It is thus preferred to supply the raw data that is available
-      HTTP_SERVER_NAME = 'http.server_name'
-
-      # The matched route (path template)
+      # The matched route (path template in the format used by the respective server framework). See note below
+      # @note 'http.route' MUST NOT be populated when this is not supported by the HTTP server framework as the route attribute should have low-cardinality and the URI path can NOT substitute it
       HTTP_ROUTE = 'http.route'
 
       # The IP address of the original client behind all proxies, if known (e.g. from [X-Forwarded-For](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Forwarded-For))
-      # @note This is not necessarily the same as `net.peer.ip`, which would
+      # @note This is not necessarily the same as `net.sock.peer.addr`, which would
       #  identify the network-level peer, which may be a proxy.
       #  
       #  This attribute should be set when a source of information different
-      #  from the one used for `net.peer.ip`, is available even if that other
-      #  source just confirms the same value as `net.peer.ip`.
-      #  Rationale: For `net.peer.ip`, one typically does not know if it
+      #  from the one used for `net.sock.peer.addr`, is available even if that other
+      #  source just confirms the same value as `net.sock.peer.addr`.
+      #  Rationale: For `net.sock.peer.addr`, one typically does not know if it
       #  comes from a proxy, reverse proxy, or the actual client. Setting
-      #  `http.client_ip` when it's the same as `net.peer.ip` means that
+      #  `http.client_ip` when it's the same as `net.sock.peer.addr` means that
       #  one is at least somewhat confident that the address is not that of
       #  the closest proxy
       HTTP_CLIENT_IP = 'http.client_ip'
 
-      # Like `net.peer.ip` but for the host IP. Useful in case of a multi-IP host
-      NET_HOST_IP = 'net.host.ip'
+      # Name of the local HTTP server that received the request
+      # @note Determined by using the first of the following that applies
+      #  
+      #  - The [primary server name](#http-server-definitions) of the matched virtual host. MUST only
+      #    include host identifier.
+      #  - Host identifier of the [request target](https://www.rfc-editor.org/rfc/rfc9110.html#target.resource)
+      #    if it's sent in absolute-form.
+      #  - Host identifier of the `Host` header
+      #  
+      #  SHOULD NOT be set if only IP address is available and capturing name would require a reverse DNS lookup
+      NET_HOST_NAME = 'net.host.name'
 
-      # Like `net.peer.port` but for the host port
+      # Port of the local HTTP server that received the request
+      # @note Determined by using the first of the following that applies
+      #  
+      #  - Port identifier of the [primary server host](#http-server-definitions) of the matched virtual host.
+      #  - Port identifier of the [request target](https://www.rfc-editor.org/rfc/rfc9110.html#target.resource)
+      #    if it's sent in absolute-form.
+      #  - Port identifier of the `Host` header
       NET_HOST_PORT = 'net.host.port'
 
-      # Local hostname or similar, see note below
-      NET_HOST_NAME = 'net.host.name'
+      # Local socket address. Useful in case of a multi-IP host
+      NET_SOCK_HOST_ADDR = 'net.sock.host.addr'
+
+      # Local socket port number
+      NET_SOCK_HOST_PORT = 'net.sock.host.port'
+
+      # Application layer protocol used. The value SHOULD be normalized to lowercase
+      NET_APP_PROTOCOL_NAME = 'net.app.protocol.name'
+
+      # Version of the application layer protocol used. See note below
+      # @note `net.app.protocol.version` refers to the version of the protocol used and might be different from the protocol client's version. If the HTTP client used has a version of `0.27.2`, but sends HTTP version `1.1`, this attribute should be set to `1.1`
+      NET_APP_PROTOCOL_VERSION = 'net.app.protocol.version'
 
       # The internet connection type currently being used by the host
       NET_HOST_CONNECTION_TYPE = 'net.host.connection.type'
@@ -331,6 +346,13 @@ module OpenTelemetry
       # The line number in `code.filepath` best representing the operation. It SHOULD point within the code unit named in `code.function`
       CODE_LINENO = 'code.lineno'
 
+      # Full HTTP request URL in the form `scheme://host[:port]/path?query[#fragment]`. Usually the fragment is not transmitted over HTTP, but if it is known, it should be included nevertheless
+      # @note `http.url` MUST NOT contain credentials passed via URL in form of `https://username:password@www.example.com/`. In such case the attribute's value should be `https://www.example.com/`
+      HTTP_URL = 'http.url'
+
+      # The ordinal number of request re-sending attempt
+      HTTP_RETRY_COUNT = 'http.retry_count'
+
       # The value `aws-api`
       RPC_SYSTEM = 'rpc.system'
 
@@ -407,6 +429,16 @@ module OpenTelemetry
 
       # The JSON-serialized value of each item in the the `GlobalSecondaryIndexUpdates` request field
       AWS_DYNAMODB_GLOBAL_SECONDARY_INDEX_UPDATES = 'aws.dynamodb.global_secondary_index_updates'
+
+      # The name of the operation being executed
+      GRAPHQL_OPERATION_NAME = 'graphql.operation.name'
+
+      # The type of the operation being executed
+      GRAPHQL_OPERATION_TYPE = 'graphql.operation.type'
+
+      # The GraphQL document being executed
+      # @note The value may be sanitized to exclude sensitive information
+      GRAPHQL_DOCUMENT = 'graphql.document'
 
       # A string identifying the kind of message consumption as defined in the [Operation names](#operation-names) section above. If the operation is "send", this attribute MUST NOT be set, since the operation can be inferred from the span kind in that case
       MESSAGING_OPERATION = 'messaging.operation'

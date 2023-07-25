@@ -10,7 +10,7 @@ require 'yard'
 require 'rubocop/rake_task'
 require 'tmpdir'
 
-SPEC_VERSION = '1.10.0'
+SPEC_VERSION = '1.13.0'
 
 RuboCop::RakeTask.new
 
@@ -41,13 +41,13 @@ task :generate do
       `git checkout "v#{SPEC_VERSION}"`
     end
 
-    %w[trace resource].each do |kind|
+    %w[trace resource logs].each do |kind|
       cmd = %W[
         docker run --rm
         -v "#{tmpdir}/semantic_conventions/#{kind}":/source
         -v "#{cwd}/templates":/templates
         -v "#{cwd}/lib":/output
-        otel/semconvgen:0.11.1
+        otel/semconvgen:0.13.0
         -f /source code
         --template /templates/semantic_conventions.j2
         --output /output/opentelemetry/semantic_conventions/#{kind}.rb
