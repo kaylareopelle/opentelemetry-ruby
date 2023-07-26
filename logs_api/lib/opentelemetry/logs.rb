@@ -4,10 +4,14 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-require 'opentelemetry'
+require_relative 'logs/log_record'
+require_relative 'logs/logger_provider'
+require_relative 'logs/logger'
 
 module OpenTelemetry
-  # OpenTelemetry Logs API
+  # The Logs API records a timestamped record with metadata.
+  # In OpenTelemetry, any data that is not part of a distributed trace or a
+  # metric is a log. For example, events are a specific type of log.
   module Logs
   end
 end
