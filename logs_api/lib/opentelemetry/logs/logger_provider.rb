@@ -20,11 +20,12 @@ module OpenTelemetry
       # identical name, version, and schema_url.
       #
       # @param name [String] This name uniquely identifies the instrumentation
-      #  scope, such as the instrumentation library (e.g. io.opentelemetry.contrib.mongodb),
-      #  package, module or class name. If an application or library has built-in
-      #  OpenTelemetry instrumentation, both Instrumented library and Instrumentation
-      #  library may refer to the same library. In that scenario, the name denotes
-      #  a module name or component name within that library or application.
+      #  scope, such as the instrumentation library
+      #  (e.g. io.opentelemetry.contrib.mongodb), package, module or class name.
+      #  If an application or library has built-in OpenTelemetry
+      #  instrumentation, both Instrumented library and Instrumentation library
+      #  may refer to the same library. In that scenario, the name denotes a
+      #  module name or component name within that library or application.
       # @param version [optional String] Specifies the version of the
       #  instrumentation scope if the scope has a version (e.g. a library
       #  version). Example value: 1.0.0.
