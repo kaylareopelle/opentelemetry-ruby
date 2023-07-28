@@ -15,7 +15,7 @@ describe OpenTelemetry::Logs do
     it 'always uses the same LoggerProvider' do
       first_call = OpenTelemetry::Logs.logger_provider
       second_call = OpenTelemetry::Logs.logger_provider
-      assert_equal(first_call.object_id, second_call.object_id)
+      assert_same(first_call, second_call)
     end
   end
 end
