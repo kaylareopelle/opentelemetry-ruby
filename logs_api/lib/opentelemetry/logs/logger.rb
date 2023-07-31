@@ -19,6 +19,26 @@ module OpenTelemetry
         # Loggers are accessed through the logger_provider
         OpenTelemetry::Logs.logger_provider.loggers << self
       end
+
+      def emit_log_record(
+        timestamp: nil,
+        observed_timestamp: Process.clock_gettime(Process::CLOCK_REALTIME),
+        context: nil,
+        severity_number: nil,
+        severity_text: nil,
+        body: nil,
+        attributes: nil
+      )
+        OpenTelemetry::Logs::LogRecord.new(
+          timestamp: timestamp,
+          observed_timestamp: observed_timestamp,
+          context: context,
+          severity_number: severity_number,
+          severity_text: severity_text,
+          body: body,
+          attributes: attributes
+        )
+      end
     end
   end
 end
