@@ -6,7 +6,7 @@
 
 module OpenTelemetry
   module Logs
-    # The Logger is responsible for emitting LogRecords
+    # The object representing a single log and its associated attributes
     class LogRecord
       attr_reader :timestamp, :observed_timestamp, :context, :severity_number, :severity_text, :body, :attributes
 
@@ -22,13 +22,13 @@ module OpenTelemetry
 
         @timestamp = timestamp
         @observed_timestamp = observed_timestamp
-        @context = context # may use the current contex
+        @context = context || OpenTelemetry::Context.current
         @severity_number = severity_number
         @severity_text = severity_text
         @body = body
         @attributes = attributes
 
-        # add to processing pipeline
+        # TODO: add to processing pipeline
       end
     end
   end
