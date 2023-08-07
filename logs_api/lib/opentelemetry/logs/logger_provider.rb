@@ -12,20 +12,16 @@ module OpenTelemetry
     # log appenders/bridges. It should NOT be used directly by application
     # developers.
     class LoggerProvider
-      # Returns a {Logger} instance.
+      NOOP_LOGGER = OpenTelemetry::Logs::Logger.new
+
+      # Returns an {OpenTelemetry::Logs::Logger} instance.
       #
-      # @param name [optional String] Instrumentation package name
-      # @param version [optional String] Instrumentation package version
-      # @param schema_url [optional String] Schema URL recorded in the emitted
-      #   telemetry.
-      # @param attributes [optional Hash] Specifies the instrumentation scope
-      #   attributes to associate with emitted telemetry.
+      # @param [optional String] name Instrumentation package name
+      # @param [optional String] version Instrumentation package version
       #
       # @return [OpenTelemetry::Logs::Logger]
-      #
-      # @api public
-      def logger(name: nil, version: nil, schema_url: nil, attributes: {})
-        @logger ||= OpenTelemetry::Logs::Logger.new
+      def logger(name = nil, version = nil)
+        @logger ||= NOOP_LOGGER
       end
     end
   end

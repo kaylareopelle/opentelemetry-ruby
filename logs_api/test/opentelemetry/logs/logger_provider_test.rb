@@ -8,14 +8,7 @@ require 'test_helper'
 
 describe OpenTelemetry::Logs::LoggerProvider do
   let(:logger_provider) { OpenTelemetry::Logs::LoggerProvider.new }
-  let(:args) do
-    {
-      name: 'component',
-      version: '1.0',
-      schema_url: 'schema_url',
-      attributes: { a: 1 }
-    }
-  end
+  let(:args) { { name: 'component', version: '1.0' } }
 
   describe '#logger' do
     it 'returns the same logger for the same arguments' do
