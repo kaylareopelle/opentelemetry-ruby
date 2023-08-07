@@ -11,10 +11,9 @@ describe OpenTelemetry::Logs::LoggerProvider do
   let(:args) { { name: 'component', version: '1.0' } }
 
   describe '#logger' do
-    it 'returns the same logger for the same arguments' do
+    it 'returns the NOOP_LOGGER' do
       logger1 = logger_provider.logger(**args)
-      logger2 = logger_provider.logger(**args)
-      assert_same(logger1, logger2)
+      assert_same(logger1, OpenTelemetry::Logs::LoggerProvider::NOOP_LOGGER)
     end
   end
 end
