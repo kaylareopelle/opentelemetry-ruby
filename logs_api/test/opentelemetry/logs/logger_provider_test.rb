@@ -12,8 +12,10 @@ describe OpenTelemetry::Logs::LoggerProvider do
 
   describe '#logger' do
     it 'returns the NOOP_LOGGER' do
-      logger1 = logger_provider.logger(**args)
-      assert_same(logger1, OpenTelemetry::Logs::LoggerProvider::NOOP_LOGGER)
+      assert_same(
+        OpenTelemetry::Logs::LoggerProvider::NOOP_LOGGER,
+        logger_provider.logger(**args)
+      )
     end
   end
 end
