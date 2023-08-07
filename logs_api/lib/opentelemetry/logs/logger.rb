@@ -12,16 +12,17 @@ module OpenTelemetry
     # log appenders/bridges. It should NOT be used directly by application
     # developers.
     class Logger
-      # Create a {LogRecord}
+      # rubocop:disable Style/EmptyMethod
+
+      # Emit a {LogRecord} to the processing pipeline.
       #
       # @param timestamp [optional Float, Time] Time in nanoseconds since Unix
       #   epoch when the event occurred measured by the origin clock, i.e. the
       #   time at the source.
       # @param observed_timestamp [optional Float, Time] Time in nanoseconds
       #   since Unix epoch when the event was observed by the collection system.
-      #   Defaults to +Process.clock_gettime(Process::CLOCK_REALTIME)+.
       # @param context [optional Context] The Context to associate with the
-      #   LogRecord. Defaults to +OpenTelemetry::Context.current+.
+      #   LogRecord.
       # @param severity_number [optional Integer] Numerical value of the
       #   severity. Smaller numerical values correspond to less severe events
       #   (such as debug events), larger numerical values correspond to more
@@ -36,7 +37,7 @@ module OpenTelemetry
       #   event.
       #
       # @api public
-      def create_log_record(
+      def emit(
         timestamp: nil,
         observed_timestamp: Process.clock_gettime(Process::CLOCK_REALTIME),
         context: OpenTelemetry::Context.current,
@@ -45,8 +46,8 @@ module OpenTelemetry
         body: nil,
         attributes: nil
       )
-        LogRecord.new
       end
+      # rubocop:enable Style/EmptyMethod
     end
   end
 end

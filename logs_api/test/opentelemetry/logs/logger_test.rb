@@ -9,9 +9,9 @@ require 'test_helper'
 describe OpenTelemetry::Logs::Logger do
   let(:logger) { OpenTelemetry::Logs::Logger.new }
 
-  describe '#create_log_record' do
-    it 'creates a new LogRecord' do
-      assert_instance_of(OpenTelemetry::Logs::LogRecord, logger.create_log_record)
+  describe '#emit' do
+    it 'returns nil, as it is a no-op method' do
+      assert_nil(logger.emit)
     end
   end
 end
