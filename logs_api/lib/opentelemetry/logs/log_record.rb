@@ -6,7 +6,7 @@
 
 module OpenTelemetry
   module Logs
-    # No-op implementation of an emitted log and its associated attributes
+    # No-op implementation of an emitted log and its associated attributes.
     class LogRecord; end
   end
 end
