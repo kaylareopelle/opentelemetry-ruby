@@ -7,6 +7,10 @@
 module OpenTelemetry
   module Logs
     # No-op implementation of logger.
+    #
+    # The Logs Bridge API is provided for logging library authors to build
+    # log appenders/bridges. It should NOT be used directly by application
+    # developers.
     class Logger
       # Create a {LogRecord}
       #
