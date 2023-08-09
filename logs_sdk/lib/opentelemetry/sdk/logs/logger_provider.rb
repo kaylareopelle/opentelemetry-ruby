@@ -19,10 +19,17 @@ module OpenTelemetry
         #
         # @param [optional Resource] resource The resource to associate with new
         #   LogRecords created by Loggers created by this LoggerProvider
+        # @param [optional Array] log_record_processors to associate with the
+        #   LoggerProvider
         #
         # @return [LoggerProvider]
-        def initialize(resource: OpenTelemetry::SDK::Resources::Resource.create)
+        def initialize(
+          resource: OpenTelemetry::SDK::Resources::Resource.create,
+          log_record_processors: []
+        )
+          @mutex = Mutex.new
           @resource = resource
+          @log_record_processors = log_record_processors
         end
 
         # Returns a {OpenTelemetry::SDK::Logs::Logger} instance.
@@ -37,8 +44,19 @@ module OpenTelemetry
 
           OpenTelemetry.logger.warn(EMPTY_NAME_ERROR) if name.empty?
 
-          # Q: @registry_mutex.synchronize invokes similar code within a block in the TracerProvider. Is that needed here for async safety?
-          OpenTelemetry::SDK::Logs::Logger.new(name, version, self)
+          # Q: Why does the TracerProvider have both @mutex and @registry_mutex?
+          @mutex.synchronize do
+            OpenTelemetry::SDK::Logs::Logger.new(name, version, self)
+          end
+        end
+
+        # Adds a new LogRecordProcessor to this {LoggerProvider}.
+        #
+        # @param log_record_processor the new LogRecordProcessor to be added
+        def add_log_record_processor(log_record_processor)
+          @mutex.synchronize do
+            @log_record_processors = @log_record_processors.dup.push(log_record_processor)
+          end
         end
       end
     end
