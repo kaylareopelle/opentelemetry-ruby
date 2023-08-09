@@ -9,6 +9,15 @@ require 'test_helper'
 describe OpenTelemetry::SDK::Logs::LoggerProvider do
   let(:logger_provider) { OpenTelemetry::SDK::Logs::LoggerProvider.new }
 
+  describe 'resource association' do
+    let(:resource) { OpenTelemetry::SDK::Resources::Resource.create('hi' => 1) }
+    let(:logger_provider) { OpenTelemetry::SDK::Logs::LoggerProvider.new(resource: resource) }
+
+    it 'allows a resource to be associated with the logger provider' do
+      assert_instance_of(OpenTelemetry::SDK::Resources::Resource, logger_provider.resource)
+    end
+  end
+
   describe '#logger' do
     it 'logs a warning if name is nil' do
       OpenTelemetry::TestHelpers.with_test_logger do |log_stream|
