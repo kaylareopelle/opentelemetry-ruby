@@ -10,8 +10,20 @@ module OpenTelemetry
       # {LoggerProvider} is the SDK implementation of
       # {OpenTelemetry::Logs::LoggerProvider}.
       class LoggerProvider < OpenTelemetry::Logs::LoggerProvider
+        attr_reader :resource
+
         EMPTY_NAME_ERROR = 'LoggerProvider#logger called without '\
             'providing a logger name.'
+
+        # Returns a new {LoggerProvider} instance.
+        #
+        # @param [optional Resource] resource The resource to associate with new
+        #   LogRecords created by Loggers created by this LoggerProvider
+        #
+        # @return [LoggerProvider]
+        def initialize(resource: OpenTelemetry::SDK::Resources::Resource.create)
+          @resource = resource
+        end
 
         # Returns a {OpenTelemetry::SDK::Logs::Logger} instance.
         #
@@ -25,7 +37,7 @@ module OpenTelemetry
 
           OpenTelemetry.logger.warn(EMPTY_NAME_ERROR) if name.empty?
 
-          # registry mutex? is that needed here for async safety?
+          # Q: @registry_mutex.synchronize invokes similar code within a block in the TracerProvider. Is that needed here for async safety?
           OpenTelemetry::SDK::Logs::Logger.new(name, version, self)
         end
       end
