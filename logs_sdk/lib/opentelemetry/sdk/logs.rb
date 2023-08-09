@@ -5,6 +5,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 require_relative 'logs/version'
+require_relative 'logs/logger'
+require_relative 'logs/logger_provider'
 
 module OpenTelemetry
   module SDK
