@@ -27,9 +27,10 @@ module OpenTelemetry
           resource: OpenTelemetry::SDK::Resources::Resource.create,
           log_record_processors: []
         )
+          @log_record_processors = log_record_processors
           @mutex = Mutex.new
           @resource = resource
-          @log_record_processors = log_record_processors
+          @stopped = false
         end
 
         # Returns a {OpenTelemetry::SDK::Logs::Logger} instance.
@@ -56,6 +57,41 @@ module OpenTelemetry
         def add_log_record_processor(log_record_processor)
           @mutex.synchronize do
             @log_record_processors = @log_record_processors.dup.push(log_record_processor)
+          end
+        end
+
+        # Attempts to stop all the activity for this {LoggerProvider}. Calls
+        # LogRecordProcessor#shutdown for all registered LogRecordProcessors.
+        #
+        # This operation may block until all the Log Records are processed. Must
+        # be called before turning off the main application to ensure all data
+        # are processed and exported.
+        #
+        # After this is called all the newly created {LogRecord}s will be no-op.
+        #
+        # @param [optional Numeric] timeout An optional timeout in seconds.
+        # @return [Integer] Export::SUCCESS if no error occurred, Export::FAILURE if
+        #   a non-specific failure occurred, Export::TIMEOUT if a timeout occurred.
+        def shutdown(timeout: nil)
+          @mutex.synchronize do
+            if @stopped
+              OpenTelemetry.logger.warn(
+                'calling LoggerProvider#shutdown multiple times.'
+              )
+              return OpenTelemetry::SDK::Logs::Export::FAILURE
+            end
+
+            start_time = OpenTelemetry::Common::Utilities.timeout_timestamp
+            results = @log_record_processors.map do |processor|
+              remaining_timeout = OpenTelemetry::Common::Utilities.maybe_timeout(timeout, start_time)
+              break [OpenTelemetry::SDK::Logs::Export::TIMEOUT] if remaining_timeout&.zero?
+
+              # this needs an argument, but I'm having trouble passing the arg to the expect
+              processor.shutdown
+            end
+
+            @stopped = true
+            results.max || OpenTelemetry::SDK::Logs::Export::SUCCESS
           end
         end
       end
