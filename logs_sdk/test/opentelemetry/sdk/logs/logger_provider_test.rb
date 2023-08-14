@@ -18,6 +18,15 @@ describe OpenTelemetry::SDK::Logs::LoggerProvider do
     end
   end
 
+  describe '#add_log_record_processor' do
+    it 'adds the processor to the providers processors' do
+      mock_span_processor = Minitest::Mock.new
+      assert_equal(0, logger_provider.instance_variable_get(:@log_record_processors).length)
+      logger_provider.add_log_record_processor(mock_span_processor)
+      assert_equal(1, logger_provider.instance_variable_get(:@log_record_processors).length)
+    end
+  end
+
   describe '#logger' do
     it 'logs a warning if name is nil' do
       OpenTelemetry::TestHelpers.with_test_logger do |log_stream|
