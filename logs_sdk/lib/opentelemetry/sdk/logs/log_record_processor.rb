@@ -7,7 +7,7 @@
 module OpenTelemetry
   module SDK
     module Logs
-      # 
+      # Presently no-op LogRecordProcessor
       class LogRecordProcessor
         def shutdown(timeout: nil)
           # TODO: implement
