@@ -19,10 +19,11 @@ describe OpenTelemetry::SDK::Logs::LoggerProvider do
   end
 
   describe '#add_log_record_processor' do
-    it 'adds the processor to the providers processors' do
-      mock_span_processor = Minitest::Mock.new
+    let(:mock_log_record_processor) { Minitest::Mock.new }
+
+    it "adds the processor to the logger provider's processors" do
       assert_equal(0, logger_provider.instance_variable_get(:@log_record_processors).length)
-      logger_provider.add_log_record_processor(mock_span_processor)
+      logger_provider.add_log_record_processor(mock_log_record_processor)
       assert_equal(1, logger_provider.instance_variable_get(:@log_record_processors).length)
     end
   end
@@ -121,14 +122,28 @@ describe OpenTelemetry::SDK::Logs::LoggerProvider do
     end
   end
 
-    it 'only notifies the processor once' do
-      mock_span_processor = Minitest::Mock.new
+  describe '#force_flush' do
+    let(:mock_log_record_processor)  { Minitest::Mock.new }
+    let(:mock_log_record_processor2) { Minitest::Mock.new }
 
-      mock_span_processor.expect(:shutdown, nil)
-      provider.add_log_record_processor(mock_span_processor)
-      provider.shutdown
-      provider.shutdown
-      mock_span_processor.verify
+    it 'notifies the log record processor' do
+      # mock_log_record_processor.expect(:force_flush, nil, [{timeout: nil}])
+      mock_log_record_processor.expect(:force_flush, nil)
+      logger_provider.add_log_record_processor(mock_log_record_processor)
+      logger_provider.force_flush
+      mock_log_record_processor.verify
+    end
+
+    it 'supports multiple log record processors' do
+      # mock_log_record_processor.expect(:force_flush, nil, [{timeout: nil}])
+      # mock_log_record_processor2.expect(:force_flush, nil, [{timeout: nil}])
+      mock_log_record_processor.expect(:force_flush, nil)
+      mock_log_record_processor2.expect(:force_flush, nil)
+      logger_provider.add_log_record_processor(mock_log_record_processor)
+      logger_provider.add_log_record_processor(mock_log_record_processor2)
+      logger_provider.force_flush
+      mock_log_record_processor.verify
+      mock_log_record_processor2.verify
     end
   end
 end

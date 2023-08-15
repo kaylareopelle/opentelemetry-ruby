@@ -12,6 +12,10 @@ module OpenTelemetry
         def shutdown(timeout: nil)
           # TODO: implement
         end
+
+        def force_flush(timeout: nil)
+          # TODO: implement
+        end
       end
     end
   end
