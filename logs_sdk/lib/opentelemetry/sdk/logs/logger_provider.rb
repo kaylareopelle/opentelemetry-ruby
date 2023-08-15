@@ -87,6 +87,7 @@ module OpenTelemetry
               break [OpenTelemetry::SDK::Logs::Export::TIMEOUT] if remaining_timeout&.zero?
 
               # this needs an argument, but I'm having trouble passing the arg to the expect
+              # processor.shutdown(timeout: remaining_timeout)
               processor.shutdown
             end
 
