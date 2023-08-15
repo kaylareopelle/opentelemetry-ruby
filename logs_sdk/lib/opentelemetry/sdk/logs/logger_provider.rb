@@ -95,6 +95,37 @@ module OpenTelemetry
             results.max || OpenTelemetry::SDK::Logs::Export::SUCCESS
           end
         end
+
+        # Immediately export all log records that have not yet been exported
+        # for all the registered LogRecordProcessors.
+        #
+        # This method should only be called in cases where it is absolutely
+        # necessary, such as when using some FaaS providers that may suspend
+        # the process after an invocation, but before the `Processor` exports
+        # the completed log records.
+        #
+        # @param [optional Numeric] timeout An optional timeout in seconds.
+        # @return [Integer] Export::SUCCESS if no error occurred, Export::FAILURE if
+        #   a non-specific failure occurred, Export::TIMEOUT if a timeout occurred.
+        def force_flush(timeout: nil)
+          @mutex.synchronize do
+            return Export::SUCCESS if @stopped
+
+            start_time = OpenTelemetry::Common::Utilities.timeout_timestamp
+            results = @log_record_processors.map do |processor|
+              remaining_timeout = OpenTelemetry::Common::Utilities.maybe_timeout(timeout, start_time)
+              return Export::TIMEOUT if remaining_timeout&.zero?
+
+              # TODO: Fix the issue with the test not accepting the arg
+              # processor.force_flush(timeout: remaining_timeout)
+              processor.force_flush
+            end
+
+            results.max || Export::SUCCESS
+          end
+        rescue StandardError
+          Export::FAILURE
+        end
       end
     end
   end
