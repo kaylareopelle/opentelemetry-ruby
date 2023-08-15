@@ -77,44 +77,49 @@ describe OpenTelemetry::SDK::Logs::LoggerProvider do
 
   describe '#shutdown' do
     # TODO: Figure out why the argument isn't working on expect/in method
-    let(:processor) { OpenTelemetry::SDK::Logs::LogRecordProcessor.new }
-    let(:provider) do
-      OpenTelemetry::SDK::Logs::LoggerProvider.new(
-        log_record_processors: [processor]
-      )
-    end
+    let(:mock_log_record_processor) { Minitest::Mock.new }
 
     it 'logs a warning if called twice' do
       OpenTelemetry::TestHelpers.with_test_logger do |log_stream|
-        provider.shutdown
-        assert provider.instance_variable_get(:@stopped)
+        logger_provider.shutdown
+        assert logger_provider.instance_variable_get(:@stopped)
         assert_empty(log_stream.string)
-        provider.shutdown
+        logger_provider.shutdown
         assert_match(/calling .* multiple times/, log_stream.string)
       end
     end
 
     it 'sends shutdown to the processor' do
-      mock_span_processor = Minitest::Mock.new
-      mock_span_processor.expect(:shutdown, nil)
-      provider.add_log_record_processor(mock_span_processor)
-      provider.shutdown
-      mock_span_processor.verify
+      # mock_log_record_processor.expect(:shutdown, nil, [{timeout: nil}])
+      mock_log_record_processor.expect(:shutdown, nil)
+      logger_provider.add_log_record_processor(mock_log_record_processor)
+      logger_provider.shutdown
+      mock_log_record_processor.verify
     end
 
     it 'sends shutdown to multiple processors' do
-      mock_span_processor = Minitest::Mock.new
-      mock_span_processor2 = Minitest::Mock.new
-      mock_span_processor.expect(:shutdown, nil)
-      mock_span_processor2.expect(:shutdown, nil)
+      mock_log_record_processor2 = Minitest::Mock.new
+      # mock_log_record_processor.expect(:shutdown, nil, [{timeout: nil}])
+      # mock_log_record_processor2.expect(:shutdown, nil, [{timeout: nil}])
+      mock_log_record_processor.expect(:shutdown, nil)
+      mock_log_record_processor2.expect(:shutdown, nil)
 
-      provider.instance_variable_set(:@log_record_processors, [mock_span_processor, mock_span_processor2])
+      logger_provider.instance_variable_set(:@log_record_processors, [mock_log_record_processor, mock_log_record_processor2])
+      logger_provider.shutdown
 
-      provider.shutdown
-
-      mock_span_processor.verify
-      mock_span_processor2.verify
+      mock_log_record_processor.verify
+      mock_log_record_processor2.verify
     end
+
+    it 'only notifies the processor once' do
+      # mock_log_record_processor.expect(:shutdown, nil, [{timeout: nil}])
+      mock_log_record_processor.expect(:shutdown, nil)
+      logger_provider.add_log_record_processor(mock_log_record_processor)
+      logger_provider.shutdown
+      logger_provider.shutdown
+      mock_log_record_processor.verify
+    end
+  end
 
     it 'only notifies the processor once' do
       mock_span_processor = Minitest::Mock.new
