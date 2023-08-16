@@ -25,6 +25,10 @@ module OpenTelemetry
           @instrumentation_scope = InstrumentationScope.new(name, version)
           @logger_provider = logger_provider
         end
+
+        def resource
+          logger_provider.resource
+        end
       end
     end
   end
