@@ -17,10 +17,10 @@ module OpenTelemetry
 
         # Returns a new {LoggerProvider} instance.
         #
-        # @param [optional Resource] resource The resource to associate with new
-        #   LogRecords created by Loggers created by this LoggerProvider
-        # @param [optional Array] log_record_processors to associate with the
-        #   LoggerProvider
+        # @param [optional Resource] resource The resource to associate with
+        #   new LogRecords created by Loggers created by this LoggerProvider.
+        # @param [optional Array] log_record_processors Log Record Processors to
+        #   associate with the LoggerProvider.
         #
         # @return [LoggerProvider]
         def initialize(
@@ -45,15 +45,16 @@ module OpenTelemetry
 
           OpenTelemetry.logger.warn(EMPTY_NAME_ERROR) if name.empty?
 
-          # Q: Why does the TracerProvider have both @mutex and @registry_mutex?
           @mutex.synchronize do
             OpenTelemetry::SDK::Logs::Logger.new(name, version, self)
           end
         end
 
-        # Adds a new LogRecordProcessor to this {LoggerProvider}.
+        # Adds a new LogRecordProcessor to this {LoggerProvider}'s
+        # log_record_processors.
         #
-        # @param log_record_processor the new LogRecordProcessor to be added
+        # @param [LogRecordProcessor] log_record_processor The new
+        #   LogRecordProcessor to add.
         def add_log_record_processor(log_record_processor)
           @mutex.synchronize do
             @log_record_processors = @log_record_processors.dup.push(log_record_processor)
@@ -76,7 +77,7 @@ module OpenTelemetry
           @mutex.synchronize do
             if @stopped
               OpenTelemetry.logger.warn(
-                'calling LoggerProvider#shutdown multiple times.'
+                'LoggerProvider#shutdown called multiple times.'
               )
               return OpenTelemetry::SDK::Logs::Export::FAILURE
             end
@@ -86,9 +87,7 @@ module OpenTelemetry
               remaining_timeout = OpenTelemetry::Common::Utilities.maybe_timeout(timeout, start_time)
               break [OpenTelemetry::SDK::Logs::Export::TIMEOUT] if remaining_timeout&.zero?
 
-              # this needs an argument, but I'm having trouble passing the arg to the expect
-              # processor.shutdown(timeout: remaining_timeout)
-              processor.shutdown
+              processor.shutdown(timeout: remaining_timeout)
             end
 
             @stopped = true
@@ -116,9 +115,7 @@ module OpenTelemetry
               remaining_timeout = OpenTelemetry::Common::Utilities.maybe_timeout(timeout, start_time)
               return Export::TIMEOUT if remaining_timeout&.zero?
 
-              # TODO: Fix the issue with the test not accepting the arg
-              # processor.force_flush(timeout: remaining_timeout)
-              processor.force_flush
+              processor.force_flush(timeout: remaining_timeout)
             end
 
             results.max || Export::SUCCESS

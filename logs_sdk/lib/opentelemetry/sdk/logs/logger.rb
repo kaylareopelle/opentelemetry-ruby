@@ -7,7 +7,8 @@
 module OpenTelemetry
   module SDK
     module Logs
-      # {OpenTelemetry::SDK::Logs::Logger} is the SDK implementation of {OpenTelemetry::Logs::Logger}
+      # {OpenTelemetry::SDK::Logs::Logger} is the SDK implementation of
+      # {OpenTelemetry::Logs::Logger}
       class Logger < OpenTelemetry::Logs::Logger
         attr_reader :instrumentation_scope
 
@@ -17,8 +18,8 @@ module OpenTelemetry
         #
         # @param [String] name Instrumentation package name
         # @param [String] version Instrumentation package version
-        # @param [LoggerProvider] logger_provider LoggerProvider that initialized
-        #   the logger
+        # @param [LoggerProvider] logger_provider LoggerProvider that
+        #   initialized the logger
         #
         # @return [OpenTelemetry::SDK::Logs::Logger]
         def initialize(name, version, logger_provider)
