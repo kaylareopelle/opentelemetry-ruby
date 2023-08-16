@@ -8,23 +8,35 @@ require 'test_helper'
 
 describe OpenTelemetry::SDK::Logs::LoggerProvider do
   let(:logger_provider) { OpenTelemetry::SDK::Logs::LoggerProvider.new }
+  let(:mock_log_record_processor)  { Minitest::Mock.new }
+  let(:mock_log_record_processor2) { Minitest::Mock.new }
 
   describe 'resource association' do
     let(:resource) { OpenTelemetry::SDK::Resources::Resource.create('hi' => 1) }
-    let(:logger_provider) { OpenTelemetry::SDK::Logs::LoggerProvider.new(resource: resource) }
+    let(:logger_provider) do
+      OpenTelemetry::SDK::Logs::LoggerProvider.new(resource: resource)
+    end
 
     it 'allows a resource to be associated with the logger provider' do
-      assert_instance_of(OpenTelemetry::SDK::Resources::Resource, logger_provider.resource)
+      assert_instance_of(
+        OpenTelemetry::SDK::Resources::Resource, logger_provider.resource
+      )
     end
   end
 
   describe '#add_log_record_processor' do
-    let(:mock_log_record_processor) { Minitest::Mock.new }
-
     it "adds the processor to the logger provider's processors" do
-      assert_equal(0, logger_provider.instance_variable_get(:@log_record_processors).length)
+      assert_equal(
+        0,
+        logger_provider.instance_variable_get(:@log_record_processors).length
+      )
+
       logger_provider.add_log_record_processor(mock_log_record_processor)
-      assert_equal(1, logger_provider.instance_variable_get(:@log_record_processors).length)
+
+      assert_equal(
+        1,
+        logger_provider.instance_variable_get(:@log_record_processors).length
+      )
     end
   end
 
@@ -77,35 +89,31 @@ describe OpenTelemetry::SDK::Logs::LoggerProvider do
   end
 
   describe '#shutdown' do
-    # TODO: Figure out why the argument isn't working on expect/in method
-    let(:mock_log_record_processor) { Minitest::Mock.new }
-
     it 'logs a warning if called twice' do
       OpenTelemetry::TestHelpers.with_test_logger do |log_stream|
         logger_provider.shutdown
         assert logger_provider.instance_variable_get(:@stopped)
         assert_empty(log_stream.string)
         logger_provider.shutdown
-        assert_match(/calling .* multiple times/, log_stream.string)
+        assert_match(/.* called multiple times/, log_stream.string)
       end
     end
 
     it 'sends shutdown to the processor' do
-      # mock_log_record_processor.expect(:shutdown, nil, [{timeout: nil}])
-      mock_log_record_processor.expect(:shutdown, nil)
+      mock_log_record_processor.expect(:shutdown, nil, timeout: nil)
       logger_provider.add_log_record_processor(mock_log_record_processor)
       logger_provider.shutdown
       mock_log_record_processor.verify
     end
 
     it 'sends shutdown to multiple processors' do
-      mock_log_record_processor2 = Minitest::Mock.new
-      # mock_log_record_processor.expect(:shutdown, nil, [{timeout: nil}])
-      # mock_log_record_processor2.expect(:shutdown, nil, [{timeout: nil}])
-      mock_log_record_processor.expect(:shutdown, nil)
-      mock_log_record_processor2.expect(:shutdown, nil)
+      mock_log_record_processor.expect(:shutdown, nil, timeout: nil)
+      mock_log_record_processor2.expect(:shutdown, nil, timeout: nil)
 
-      logger_provider.instance_variable_set(:@log_record_processors, [mock_log_record_processor, mock_log_record_processor2])
+      logger_provider.instance_variable_set(
+        :@log_record_processors,
+        [mock_log_record_processor, mock_log_record_processor2]
+      )
       logger_provider.shutdown
 
       mock_log_record_processor.verify
@@ -113,35 +121,34 @@ describe OpenTelemetry::SDK::Logs::LoggerProvider do
     end
 
     it 'only notifies the processor once' do
-      # mock_log_record_processor.expect(:shutdown, nil, [{timeout: nil}])
-      mock_log_record_processor.expect(:shutdown, nil)
+      mock_log_record_processor.expect(:shutdown, nil, timeout: nil)
+
       logger_provider.add_log_record_processor(mock_log_record_processor)
       logger_provider.shutdown
       logger_provider.shutdown
+
       mock_log_record_processor.verify
     end
   end
 
   describe '#force_flush' do
-    let(:mock_log_record_processor)  { Minitest::Mock.new }
-    let(:mock_log_record_processor2) { Minitest::Mock.new }
-
     it 'notifies the log record processor' do
-      # mock_log_record_processor.expect(:force_flush, nil, [{timeout: nil}])
-      mock_log_record_processor.expect(:force_flush, nil)
+      mock_log_record_processor.expect(:force_flush, nil, timeout: nil)
+
       logger_provider.add_log_record_processor(mock_log_record_processor)
       logger_provider.force_flush
+
       mock_log_record_processor.verify
     end
 
     it 'supports multiple log record processors' do
-      # mock_log_record_processor.expect(:force_flush, nil, [{timeout: nil}])
-      # mock_log_record_processor2.expect(:force_flush, nil, [{timeout: nil}])
-      mock_log_record_processor.expect(:force_flush, nil)
-      mock_log_record_processor2.expect(:force_flush, nil)
+      mock_log_record_processor.expect(:force_flush, nil, timeout: nil)
+      mock_log_record_processor2.expect(:force_flush, nil, timeout: nil)
+
       logger_provider.add_log_record_processor(mock_log_record_processor)
       logger_provider.add_log_record_processor(mock_log_record_processor2)
       logger_provider.force_flush
+
       mock_log_record_processor.verify
       mock_log_record_processor2.verify
     end
