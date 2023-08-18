@@ -120,7 +120,7 @@ describe OpenTelemetry::SDK::Logs::LoggerProvider do
       mock_log_record_processor2.verify
     end
 
-    it 'only notifies the processor once' do
+    it 'subsequent shutdown attempts do not reach the processor' do
       mock_log_record_processor.expect(:shutdown, nil, timeout: nil)
 
       logger_provider.add_log_record_processor(mock_log_record_processor)

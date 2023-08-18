@@ -10,7 +10,7 @@ module OpenTelemetry
       # {OpenTelemetry::SDK::Logs::Logger} is the SDK implementation of
       # {OpenTelemetry::Logs::Logger}
       class Logger < OpenTelemetry::Logs::Logger
-        attr_reader :instrumentation_scope
+        attr_reader :instrumentation_scope, :logger_provider
 
         # @api private
         #
