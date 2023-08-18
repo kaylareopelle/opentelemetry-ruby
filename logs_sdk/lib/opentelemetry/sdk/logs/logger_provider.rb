@@ -76,9 +76,7 @@ module OpenTelemetry
         def shutdown(timeout: nil)
           @mutex.synchronize do
             if @stopped
-              OpenTelemetry.logger.warn(
-                'LoggerProvider#shutdown called multiple times.'
-              )
+              OpenTelemetry.logger.warn('LoggerProvider#shutdown called multiple times.')
               return OpenTelemetry::SDK::Logs::Export::FAILURE
             end
 
