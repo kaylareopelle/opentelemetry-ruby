@@ -28,7 +28,7 @@ module OpenTelemetry
         end
 
         def resource
-          @logger_provider.resource
+          logger_provider.resource
         end
       end
     end

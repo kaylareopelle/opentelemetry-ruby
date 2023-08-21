@@ -25,7 +25,6 @@ module OpenTelemetry
         # Creates a new {ReadWriteLogRecord}.
         #
         # @param [optional Float, Time] timestamp Time when the event occurred.
-        # @param [optional Float, Time] observed_timestamp Time when the event was observed.
         # @param [optional String] trace_id The trace ID associated with a {ReadWriteLogRecord}.
         # @param [optional String] span_id The span ID associated with a {ReadWriteLogRecord}.
         # @param [optional TraceFlags] trace_flags The trace flags associated with a {ReadWriteLogRecord}.
@@ -39,7 +38,6 @@ module OpenTelemetry
         # @return [ReadWriteLogRecord]
         def initialize(
           timestamp: nil,
-          observed_timestamp: nil,
           trace_id: nil,
           span_id: nil,
           trace_flags: nil,
