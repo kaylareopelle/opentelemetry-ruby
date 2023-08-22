@@ -7,23 +7,23 @@
 module OpenTelemetry
   module SDK
     module Logs
-      # {LoggerProvider} is the SDK implementation of
-      # {OpenTelemetry::Logs::LoggerProvider}.
+      # The SDK implementation of OpenTelemetry::Logs::LoggerProvider.
       class LoggerProvider < OpenTelemetry::Logs::LoggerProvider
-        attr_reader :resource
+        attr_reader :resource, :log_record_processors
 
         EMPTY_NAME_ERROR = 'LoggerProvider#logger called without '\
-            'providing a logger name.'
-        FORCE_FLUSH_ERROR = 'unexpected error in OpenTelemetry::SDK::Logs::LoggerProvider#force_flush'
+          'providing a logger name.'
+        FORCE_FLUSH_ERROR = 'unexpected error in ' \
+          'OpenTelemetry::SDK::Logs::LoggerProvider#force_flush'
 
-        # Returns a new {LoggerProvider} instance.
+        # Returns a new LoggerProvider instance.
         #
         # @param [optional Resource] resource The resource to associate with
         #   new LogRecords created by Loggers created by this LoggerProvider.
-        # @param [optional Array] log_record_processors Log Record Processors to
-        #   associate with the LoggerProvider.
+        # @param [optional Array] log_record_processors The log record
+        #   processors to associate with this LoggerProvider.
         #
-        # @return [LoggerProvider]
+        # @return [OpenTelemetry::SDK::Logs::LoggerProvider]
         def initialize(
           resource: OpenTelemetry::SDK::Resources::Resource.create,
           log_record_processors: []
@@ -34,7 +34,7 @@ module OpenTelemetry
           @stopped = false
         end
 
-        # Returns a {OpenTelemetry::SDK::Logs::Logger} instance.
+        # Creates an {OpenTelemetry::SDK::Logs::Logger} instance.
         #
         # @param [optional String] name Instrumentation package name
         # @param [optional String] version Instrumentation package version
@@ -51,25 +51,25 @@ module OpenTelemetry
           end
         end
 
-        # Adds a new LogRecordProcessor to this {LoggerProvider}'s
+        # Adds a new log record processor to this LoggerProvider's
         # log_record_processors.
         #
-        # @param [LogRecordProcessor] log_record_processor The new
-        #   LogRecordProcessor to add.
+        # @param [LogRecordProcessor] log_record_processor The
+        #   {LogRecordProcessor} to add to this LoggerProvider.
         def add_log_record_processor(log_record_processor)
           @mutex.synchronize do
-            @log_record_processors = @log_record_processors.dup.push(log_record_processor)
+            @log_record_processors = log_record_processors.dup.push(log_record_processor)
           end
         end
 
-        # Attempts to stop all the activity for this {LoggerProvider}. Calls
-        # LogRecordProcessor#shutdown for all registered LogRecordProcessors.
+        # Attempts to stop all the activity for this LoggerProvider. Calls
+        # {LogRecordProcessor#shutdown} for all registered {LogRecordProcessor}s.
         #
-        # This operation may block until all the Log Records are processed. Must
+        # This operation may block until all log records are processed. Must
         # be called before turning off the main application to ensure all data
         # are processed and exported.
         #
-        # After this is called all the newly created {LogRecord}s will be no-op.
+        # After this is called all newly created {LogRecord}s will be no-op.
         #
         # @param [optional Numeric] timeout An optional timeout in seconds.
         # @return [Integer] Export::SUCCESS if no error occurred, Export::FAILURE if
@@ -82,7 +82,7 @@ module OpenTelemetry
             end
 
             start_time = OpenTelemetry::Common::Utilities.timeout_timestamp
-            results = @log_record_processors.map do |processor|
+            results = log_record_processors.map do |processor|
               remaining_timeout = OpenTelemetry::Common::Utilities.maybe_timeout(timeout, start_time)
               break [OpenTelemetry::SDK::Logs::Export::TIMEOUT] if remaining_timeout&.zero?
 
@@ -94,13 +94,13 @@ module OpenTelemetry
           end
         end
 
-        # Immediately export all log records that have not yet been exported
-        # for all the registered LogRecordProcessors.
+        # Immediately export all {LogRecord}s that have not yet been exported
+        # for all the registered {LogRecordProcessor}s.
         #
         # This method should only be called in cases where it is absolutely
         # necessary, such as when using some FaaS providers that may suspend
-        # the process after an invocation, but before the `Processor` exports
-        # the completed log records.
+        # the process after an invocation, but before the {LogRecordProcessor}
+        # exports the completed {LogRecord}s.
         #
         # @param [optional Numeric] timeout An optional timeout in seconds.
         # @return [Integer] Export::SUCCESS if no error occurred, Export::FAILURE if
@@ -110,7 +110,7 @@ module OpenTelemetry
             return Export::SUCCESS if @stopped
 
             start_time = OpenTelemetry::Common::Utilities.timeout_timestamp
-            results = @log_record_processors.map do |processor|
+            results = log_record_processors.map do |processor|
               remaining_timeout = OpenTelemetry::Common::Utilities.maybe_timeout(timeout, start_time)
               return Export::TIMEOUT if remaining_timeout&.zero?
 

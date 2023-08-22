@@ -7,18 +7,19 @@
 module OpenTelemetry
   module SDK
     module Logs
-      # {OpenTelemetry::SDK::Logs::Logger} is the SDK implementation of
-      # {OpenTelemetry::Logs::Logger}
+      # The SDK implementation of OpenTelemetry::Logs::Logger
       class Logger < OpenTelemetry::Logs::Logger
         attr_reader :instrumentation_scope, :logger_provider
 
         # @api private
         #
-        # Returns a new {OpenTelemetry::SDK::Logs::Logger} instance.
+        # Returns a new {OpenTelemetry::SDK::Logs::Logger} instance. This should
+        # not be called directly. New loggers should be created using
+        # {LoggerProvider#logger}.
         #
         # @param [String] name Instrumentation package name
         # @param [String] version Instrumentation package version
-        # @param [LoggerProvider] logger_provider LoggerProvider that
+        # @param [LoggerProvider] logger_provider The {LoggerProvider} that
         #   initialized the logger
         #
         # @return [OpenTelemetry::SDK::Logs::Logger]
