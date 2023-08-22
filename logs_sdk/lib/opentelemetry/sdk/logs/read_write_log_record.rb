@@ -25,8 +25,8 @@ module OpenTelemetry
         # @param [optional Float, Time] timestamp Time when the event occurred.
         # @param [optional Float, Time] observed_timestamp Time when the event
         #   was observed by the collection system. If nil, will first attempt
-        #   to set to +timestamp+. If +timestamp+ is nil, will set to
-        #   +Process.clock_gettime(Process::CLOCK_REALTIME).
+        #   to set to `timestamp`. If `timestamp` is nil, will set to
+        #   `Process.clock_gettime(Process::CLOCK_REALTIME)`.
         # @param [optional OpenTelemetry::Trace::SpanContext] span_context The
         #   OpenTelemetry::Trace::SpanContext to associate with the
         #   {ReadWriteLogRecord}.
@@ -41,8 +41,8 @@ module OpenTelemetry
         #   Array<String, Numeric, Boolean>}] attributes Attributes to associate
         #   with the {ReadWriteLogRecord}.
         # @param [OpenTelemetry::SDK::Logs::Logger] logger The logger that
-        #   created the {ReadWriteLogRecord}. Used to set +resource+ and
-        #   +instrumentation_scope+.
+        #   created the {ReadWriteLogRecord}. Used to set `resource` and
+        #   `instrumentation_scope`.
         #
         # @return [ReadWriteLogRecord]
         def initialize(
