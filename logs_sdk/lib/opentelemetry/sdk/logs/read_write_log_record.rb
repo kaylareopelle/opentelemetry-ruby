@@ -12,35 +12,43 @@ module OpenTelemetry
       class ReadWriteLogRecord < OpenTelemetry::Logs::LogRecord
         attr_accessor :timestamp,
                       :observed_timestamp,
-                      :trace_id,
-                      :span_id,
-                      :trace_flags,
+                      :span_context,
                       :severity_text,
                       :severity_number,
                       :body,
-                      :attributes,
                       :resource,
-                      :information_scope
+                      :instrumentation_scope,
+                      :attributes
 
         # Creates a new {ReadWriteLogRecord}.
         #
         # @param [optional Float, Time] timestamp Time when the event occurred.
-        # @param [optional String] trace_id The trace ID associated with a {ReadWriteLogRecord}.
-        # @param [optional String] span_id The span ID associated with a {ReadWriteLogRecord}.
-        # @param [optional TraceFlags] trace_flags The trace flags associated with a {ReadWriteLogRecord}.
-        # @param [optional String] severity_text The log severity, also known as log level.
-        # @param [optional Integer] severity_number The numerical value of the log severity.
+        # @param [optional Float, Time] observed_timestamp Time when the event
+        #   was observed by the collection system. If nil, will first attempt
+        #   to set to +timestamp+. If +timestamp+ is nil, will set to
+        #   +Process.clock_gettime(Process::CLOCK_REALTIME).
+        # @param [optional OpenTelemetry::Trace::SpanContext] span_context The
+        #   OpenTelemetry::Trace::SpanContext to associate with the
+        #   {ReadWriteLogRecord}.
+        # @param [optional String] severity_text The log severity, also known as
+        #   log level.
+        # @param [optional Integer] severity_number The numerical value of the
+        #   log severity. See OpenTelemetry::Logs::SeverityNumber.
         # @param [optional String, Numeric, Boolean, Array<String, Numeric,
         #   Boolean>, Hash{String => String, Numeric, Boolean, Array<String,
         #   Numeric, Boolean>}] body The body of the {ReadWriteLogRecord}.
-        # @param [optional Hash] attributes Additional information about the event.
+        # @param [optional Hash{String => String, Numeric, Boolean,
+        #   Array<String, Numeric, Boolean>}] attributes Attributes to associate
+        #   with the {ReadWriteLogRecord}.
+        # @param [OpenTelemetry::SDK::Logs::Logger] logger The logger that
+        #   created the {ReadWriteLogRecord}. Used to set +resource+ and
+        #   +instrumentation_scope+.
         #
         # @return [ReadWriteLogRecord]
         def initialize(
           timestamp: nil,
-          trace_id: nil,
-          span_id: nil,
-          trace_flags: nil,
+          observed_timestamp: nil,
+          span_context: nil,
           severity_text: nil,
           severity_number: nil,
           body: nil,
@@ -48,15 +56,13 @@ module OpenTelemetry
           logger: nil
         )
           @timestamp = timestamp
-          @observed_timestamp = timestamp || Process.clock_gettime(Process::CLOCK_REALTIME)
-          @trace_id = trace_id
-          @span_id = span_id
-          @trace_flags = trace_flags
+          @observed_timestamp = observed_timestamp || timestamp || Process.clock_gettime(Process::CLOCK_REALTIME)
+          @span_context = span_context
           @severity_text = severity_text
           @severity_number = severity_number
           @body = body
-          @resource = logger.resource
-          @instrumentation_scope = logger.instrumentation_scope
+          @resource = logger&.resource
+          @instrumentation_scope = logger&.instrumentation_scope
           @attributes = attributes || {}
         end
       end
