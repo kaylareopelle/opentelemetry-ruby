@@ -14,6 +14,7 @@ module OpenTelemetry
 
         EMPTY_NAME_ERROR = 'LoggerProvider#logger called without '\
             'providing a logger name.'
+        FORCE_FLUSH_ERROR = 'unexpected error in OpenTelemetry::SDK::Logs::LoggerProvider#force_flush'
 
         # Returns a new {LoggerProvider} instance.
         #
@@ -118,7 +119,8 @@ module OpenTelemetry
 
             results.max || Export::SUCCESS
           end
-        rescue StandardError
+        rescue StandardError => e
+          OpenTelemetry.handle_error(exception: e, message: FORCE_FLUSH_ERROR)
           Export::FAILURE
         end
       end

@@ -174,8 +174,7 @@ describe OpenTelemetry::SDK::Logs::LoggerProvider do
     end
 
     it 'returns a failure code when an error is raised' do
-      OpenTelemetry::Common::Utilities.stub :maybe_timeout, -> { raise StandardError.new, 'fail' } do
-        logger_provider.add_log_record_processor(mock_log_record_processor)
+      OpenTelemetry::Common::Utilities.stub :timeout_timestamp, -> { raise StandardError.new, 'fail' } do
         assert_equal(OpenTelemetry::SDK::Logs::Export::FAILURE, logger_provider.force_flush)
       end
     end
