@@ -120,7 +120,7 @@ describe OpenTelemetry::SDK::Logs::LoggerProvider do
       mock_log_record_processor2.verify
     end
 
-    it 'subsequent shutdown attempts do not reach the processor' do
+    it 'does not allow subsequent shutdown attempts to reach the processor' do
       mock_log_record_processor.expect(:shutdown, nil, timeout: nil)
 
       logger_provider.add_log_record_processor(mock_log_record_processor)
@@ -128,6 +128,13 @@ describe OpenTelemetry::SDK::Logs::LoggerProvider do
       logger_provider.shutdown
 
       mock_log_record_processor.verify
+    end
+
+    it 'returns a timeout code if the countdown reaches zero' do
+      OpenTelemetry::Common::Utilities.stub :maybe_timeout, 0 do
+        logger_provider.add_log_record_processor(mock_log_record_processor)
+        assert_equal(OpenTelemetry::SDK::Logs::Export::TIMEOUT, logger_provider.shutdown)
+      end
     end
   end
 
@@ -151,6 +158,26 @@ describe OpenTelemetry::SDK::Logs::LoggerProvider do
 
       mock_log_record_processor.verify
       mock_log_record_processor2.verify
+    end
+
+    it 'returns a success status code if called while stopped' do
+      logger_provider.add_log_record_processor(mock_log_record_processor)
+      logger_provider.instance_variable_set(:@stopped, true)
+      assert_equal(OpenTelemetry::SDK::Logs::Export::SUCCESS, logger_provider.force_flush)
+    end
+
+    it 'returns a timeout code when the timeout countdown reaches zero' do
+      OpenTelemetry::Common::Utilities.stub :maybe_timeout, 0 do
+        logger_provider.add_log_record_processor(mock_log_record_processor)
+        assert_equal(OpenTelemetry::SDK::Logs::Export::TIMEOUT, logger_provider.force_flush)
+      end
+    end
+
+    it 'returns a failure code when an error is raised' do
+      OpenTelemetry::Common::Utilities.stub :maybe_timeout, -> { raise StandardError.new, 'fail' } do
+        logger_provider.add_log_record_processor(mock_log_record_processor)
+        assert_equal(OpenTelemetry::SDK::Logs::Export::FAILURE, logger_provider.force_flush)
+      end
     end
   end
 end
