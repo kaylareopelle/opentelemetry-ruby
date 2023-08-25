@@ -7,7 +7,9 @@
 module OpenTelemetry
   module SDK
     module Logs
-      # Presently no-op LogRecordProcessor
+      # Diff b/w spec for logs & traces:
+      # Logs MUST: "decorate built-in processors for advanced scenarios such as enriching with attributes."
+      # Logs MUST: not allow subsequent calls to on emit after shutdown is called (Trace SDK must also not allow calls to force flush and should gracefully ignore if possible)
       class LogRecordProcessor
         # Called when a {LogRecord} is emitted
         # @param [LogRecord] log_record The emitted {ReadWriteLogRecord}
