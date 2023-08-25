@@ -7,11 +7,7 @@
 module OpenTelemetry
   module SDK
     module Logs
-      # Implementation of {OpenTelemetry::Logs::LogRecord} that records log events.
-      #
-      # This implementation includes reader methods intended to allow access to
-      # internal state by {LogRecordProcessor}s.
-      # TODO: There's a note about instrumentation use in Span, do we need that here too?
+      # Implementation of OpenTelemetry::Logs::LogRecord that records log events.
       class LogRecord < OpenTelemetry::Logs::LogRecord
         attr_accessor :timestamp,
                       :observed_timestamp,
@@ -43,7 +39,7 @@ module OpenTelemetry
         # @param [optional Hash{String => String, Numeric, Boolean,
         #   Array<String, Numeric, Boolean>}] attributes Attributes to associate
         #   with the {LogRecord}.
-        # @param [OpenTelemetry::SDK::Logs::Logger] logger The logger that
+        # @param [optional OpenTelemetry::SDK::Logs::Logger] logger The logger that
         #   created the {LogRecord}. Used to set `resource` and
         #   `instrumentation_scope`.
         #
