@@ -7,13 +7,14 @@
 module OpenTelemetry
   module SDK
     module Logs
+      # WARNING - The spec has some differences from the Span version of this processor
       # Implementation of the duck type LogRecordProcessor that batches
       # log records exported by the SDK then pushes them to the exporter
       # pipeline.
       #
       # Typically, the BatchLogRecordProcessor will be more suitable for
       # production environments than the SimpleLogRecordProcessor.
-      class BatchLogRecordProcessor
+      class BatchLogRecordProcessor < LogRecordProcessor
         # @param [Exporter] exporter The exporter where the {LogRecord}s are
         #   pushed.
         # @param [Integer] max_queue_size The maximum queue size. After the
@@ -24,11 +25,17 @@ module OpenTelemetry
         #   can run before it is cancelled.
         # @param [Integer] max_export_batch_size The maximum batch size of
         #   every export. It must be smaller or equal to +max_queue_size+.
-        def initialize(exporter: nil,
+        def initialize(exporter,
+                       exporter_timeout: 30_000,
+                       schedule_delay: 1000,
                        max_queue_size: 2048,
-                       scheduled_delay_millis: 1000,
-                       export_timeout_millis: 30_000,
                        max_export_batch_size: 512)
+
+          unless max_export_batch_size <= max_queue_size
+            raise ArgumentError,
+                  'max_export_batch_size much be less than or equal to max_queue_size'
+          end
+
           @exporter = exporter
           @max_queue_size = max_queue_size
           @scheduled_delay_millis = scheduled_delay_millis
