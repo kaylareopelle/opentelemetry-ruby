@@ -7,7 +7,7 @@
 module OpenTelemetry
   module SDK
     module Export
-      module Log
+      module Logs
         # An implementation of {LogRecordProcessor} that converts the LogRecord
         # into a ReadableLogRecord and passes it to the configured exporter
         # on emit.
