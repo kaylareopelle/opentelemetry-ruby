@@ -3,9 +3,6 @@
 # Copyright The OpenTelemetry Authors
 #
 # SPDX-License-Identifier: Apache-2.0
-require_relative 'export/log_record_processor'
-require_relative 'export/simple_log_record_processor'
-
 module OpenTelemetry
   module SDK
     module Logs
@@ -24,3 +21,7 @@ module OpenTelemetry
     end
   end
 end
+
+require_relative 'export/log_record_processor'
+require_relative 'export/simple_log_record_processor'
+require_relative 'export/batch_log_record_processor'
