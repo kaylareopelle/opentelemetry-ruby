@@ -31,6 +31,51 @@ module OpenTelemetry
         def resource
           logger_provider.resource
         end
+
+        # Emit a {LogRecord} to the processing pipeline.
+        #
+        # @param timestamp [optional Float, Time] Time in nanoseconds since Unix
+        #   epoch when the event occurred measured by the origin clock, i.e. the
+        #   time at the source.
+        # @param observed_timestamp [optional Float, Time] Time in nanoseconds
+        #   since Unix epoch when the event was observed by the collection system.
+        #   Intended default: Process.clock_gettime(Process::CLOCK_REALTIME)
+        # @param [optional OpenTelemetry::Trace::SpanContext] span_context The
+        #   OpenTelemetry::Trace::SpanContext to associate with the
+        #   {LogRecord}.
+        # @param severity_number [optional Integer] Numerical value of the
+        #   severity. Smaller numerical values correspond to less severe events
+        #   (such as debug events), larger numerical values correspond to more
+        #   severe events (such as errors and critical events).
+        # @param severity_text [optional String] Original string representation of
+        #   the severity as it is known at the source. Also known as log level.
+        # @param body [optional String, Numeric, Boolean, Array<String, Numeric,
+        #   Boolean>, Hash{String => String, Numeric, Boolean, Array<String,
+        #   Numeric, Boolean>}] A value containing the body of the log record.
+        # @param attributes [optional Hash{String => String, Numeric, Boolean,
+        #   Array<String, Numeric, Boolean>}] Additional information about the
+        #   event.
+        #
+        # @api public
+        def emit(timestamp: nil,
+                 observed_timestamp: nil,
+                 span_context: nil, # or should this just be context? like in the API?
+                 severity_number: nil,
+                 severity_text: nil,
+                 body: nil,
+                 attributes: nil)
+          log_record = LogRecord.new(timestamp: timestamp,
+                                     observed_timestamp: observed_timestamp,
+                                     span_context: span_context,
+                                     severity_number: severity_number,
+                                     severity_text: severity_text,
+                                     body: body,
+                                     attributes: attributes)
+
+          logger_provider.log_record_processors.each do |processor|
+            processor.emit(log_record)
+          end
+        end
       end
     end
   end
