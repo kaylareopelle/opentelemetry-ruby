@@ -19,7 +19,15 @@ describe OpenTelemetry::SDK::Logs::LogRecordProcessor do
     processor.force_flush
   end
 
+  it 'returns a success code when #force_flush is called' do
+    assert(OpenTelemetry::SDK::Logs::Export::SUCCESS, processor.force_flush)
+  end
+
   it 'implements #shutdown' do
     processor.shutdown
+  end
+
+  it 'returns a success code when #shutdown is called' do
+    assert(OpenTelemetry::SDK::Logs::Export::SUCCESS, processor.shutdown)
   end
 end
