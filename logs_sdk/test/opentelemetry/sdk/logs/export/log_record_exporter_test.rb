@@ -9,8 +9,8 @@ require 'test_helper'
 describe OpenTelemetry::SDK::Logs::Export::LogRecordExporter do
   export = OpenTelemetry::SDK::Logs::Export
 
-  let(:log_record_data1) { OpenTelemetry::SDK::Trace::LogRecordData.new({ name: 'name1' }) }
-  let(:log_record_data2) { OpenTelemetry::SDK::Trace::LogRecordData.new({ name: 'name2' }) }
+  let(:log_record_data1) { OpenTelemetry::SDK::Logs::LogRecordData.new({ name: 'name1' }) }
+  let(:log_record_data2) { OpenTelemetry::SDK::Logs::LogRecordData.new({ name: 'name2' }) }
   let(:log_records)      { [log_record_data1, log_record_data2] }
   let(:exporter)         { export::LogRecordExporter.new }
 
