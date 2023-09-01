@@ -6,8 +6,8 @@
 
 require 'test_helper'
 
-describe OpenTelemetry::SDK::Trace::LogRecordProcessor do
-  let(:processor)  { OpenTelemetry::SDK::Trace::LogRecordProcessor.new }
+describe OpenTelemetry::SDK::Logs::LogRecordProcessor do
+  let(:processor)  { OpenTelemetry::SDK::Logs::LogRecordProcessor.new }
   let(:log_record) { nil }
   let(:context)    { nil }
 
