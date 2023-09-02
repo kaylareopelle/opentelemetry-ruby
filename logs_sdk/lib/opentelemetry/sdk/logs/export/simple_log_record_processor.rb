@@ -6,8 +6,8 @@
 
 module OpenTelemetry
   module SDK
-    module Export
-      module Logs
+    module Logs
+      module Export
         # An implementation of {LogRecordProcessor} that converts the LogRecord
         # into a ReadableLogRecord and passes it to the configured exporter
         # on emit.
@@ -18,7 +18,7 @@ module OpenTelemetry
         # threads is not desirable as well as scenarios where different custom
         # attributes should be added to individual log records based on code
         # scopes.
-        class SimpleLogRecordProcessor < LogRecordProcessor
+        class SimpleLogRecordProcessor < OpenTelemetry::SDK::Logs::LogRecordProcessor
           # Returns a new {SimpleLogRecordProcessor} that converts log records
           # to {ReadableLogRecords} and forwards them to the given
           # log_record_exporter.
@@ -51,6 +51,8 @@ module OpenTelemetry
 
             # do we want log record data?
             @log_record_exporter&.export([log_record.to_log_record_data])
+          rescue => e # rubocop:disable Style/RescueStandardError
+            OpenTelemetry.handle_error(exception: e, message: 'Unexpected error in Logger#emit')
           end
 
           # Export all log records to the configured `Exporter` that have not
