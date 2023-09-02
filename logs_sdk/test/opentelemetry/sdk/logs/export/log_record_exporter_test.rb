@@ -32,4 +32,8 @@ describe OpenTelemetry::SDK::Logs::Export::LogRecordExporter do
     exporter.shutdown
     _(exporter.export(log_records)).must_equal export::FAILURE
   end
+
+  it 'returns SUCCESS when #force_flush is called' do
+    assert(export::SUCCESS, exporter.force_flush)
+  end
 end
