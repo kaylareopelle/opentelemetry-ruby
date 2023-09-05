@@ -67,10 +67,11 @@ module OpenTelemetry
           log_record = LogRecord.new(timestamp: timestamp,
                                      observed_timestamp: observed_timestamp,
                                      span_context: span_context,
-                                     severity_number: severity_number,
                                      severity_text: severity_text,
+                                     severity_number: severity_number,
                                      body: body,
-                                     attributes: attributes)
+                                     attributes: attributes,
+                                     logger: self)
 
           logger_provider.log_record_processors.each do |processor|
             processor.emit(log_record)
