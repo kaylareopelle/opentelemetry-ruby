@@ -15,4 +15,32 @@ describe OpenTelemetry::SDK::Logs::Logger do
       assert_equal(logger.resource, logger_provider.resource)
     end
   end
+
+  describe '#emit' do
+    it 'creates a new LogRecord' do
+      output = 'chocolate cherry'
+      OpenTelemetry::SDK::Logs::LogRecord.stub(:new, ->(_) { puts output }) do
+        assert_output(/#{output}/) { logger.emit }
+      end
+    end
+
+    it 'sends the newly-created log record to the processors' do
+      mock_log_record = Minitest::Mock.new
+
+      OpenTelemetry::SDK::Logs::LogRecord.stub(:new, ->(_) { mock_log_record }) do
+        mock_log_record_processor = Minitest::Mock.new
+        logger_provider.add_log_record_processor(mock_log_record_processor)
+        mock_log_record_processor.expect(:emit, nil, [mock_log_record])
+        logger.emit
+        mock_log_record_processor.verify
+      end
+    end
+
+    describe 'when the provider has no processors' do
+      it 'does not error' do
+        logger_provider.instance_variable_set(:@log_record_processors, [])
+        assert(logger.emit)
+      end
+    end
+  end
 end
