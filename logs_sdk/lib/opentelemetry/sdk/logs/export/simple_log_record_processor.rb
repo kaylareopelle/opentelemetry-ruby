@@ -49,7 +49,7 @@ module OpenTelemetry
             # span_context is an optional attribute on a {LogRecord}
             return unless log_record&.span_context&.trace_flags&.sampled?
 
-            # do we want log record data?
+            # TODO: do we want log record data?
             @log_record_exporter&.export([log_record.to_log_record_data])
           rescue => e # rubocop:disable Style/RescueStandardError
             OpenTelemetry.handle_error(exception: e, message: 'Unexpected error in Logger#emit')
@@ -83,6 +83,7 @@ module OpenTelemetry
             return if @stopped
 
             @log_record_exporter&.shutdown(timeout: timeout) || SUCCESS
+          ensure
             @stopped = true
           end
         end
