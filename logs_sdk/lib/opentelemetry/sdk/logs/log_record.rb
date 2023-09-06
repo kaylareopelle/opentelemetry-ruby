@@ -65,6 +65,22 @@ module OpenTelemetry
           # TODO: Give attributes more love when working on limits, Issue #1516
           @attributes = attributes
         end
+
+        def to_log_record_data
+          LogRecordData.new(
+            @timestamp,
+            @observed_timestamp,
+            @span_context.trace_id,
+            @span_context.span_id,
+            @span_context.trace_flags,
+            @severity_text,
+            @severity_number,
+            @body,
+            @resource,
+            @instrumentation_scope,
+            @attributes
+          )
+        end
       end
     end
   end
