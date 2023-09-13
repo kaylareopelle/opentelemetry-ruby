@@ -15,45 +15,46 @@ module OpenTelemetry
         #     def setup
         #       @logger_provider = LoggerProvider.new
         #       @exporter = InMemoryLogRecordExporter.new
-        #       @logger_provider.add_log_record_processor(SimpleSampledLogRecordsProcessor.new(@exporter))
+        #       @logger_provider.add_log_record_processor(SimpleLogRecordProcessor.new(@exporter))
         #     end
-        # #log_record is sampled and has some identifying body?
-        #     def test_finished_log_records # FIX EXAMPLE!!
+        #
+        #     def test_emitted_log_records
+        #       log_record = OpenTelemetry::SDK::Logs::LogRecord.new(body: 'log')
         #       @logger_provider.logger.emit(log_record, context)
         #
-        #       log_records = @exporter.finished_log_records
-        #       log_records.wont_be_nil
-        #       log_records.size.must_equal(1)
-        #       log_records[0].body.must_equal("span") # FIX!
-        #
+        #       log_records = @exporter.emitted_log_records
+
+        #       refute_nil(log_records)
+        #       assert_equal(1, log_records.size)
+        #       assert_equal(log_records[0].body, 'log')
         #     end
         #   end
         class InMemoryLogRecordExporter
           # Returns a new instance of the {InMemoryLogRecordExporter}.
           #
           # @return a new instance of the {InMemoryLogRecordExporter}.
-          def initialize(recording: true)
-            @finished_log_records = []
+          def initialize
+            @emitted_log_records = []
             @stopped = false
             @mutex = Mutex.new
           end
 
-          # Returns a frozen array of the finished {LogRecordData}s, represented by
+          # Returns a frozen array of the emitted {LogRecordData}s, represented by
           # {io.opentelemetry.proto.trace.v1.LogRecord}.
           #
-          # @return [Array<LogRecordData>] a frozen array of the finished {LogRecordData}s.
-          def finished_log_records
+          # @return [Array<LogRecordData>] a frozen array of the emitted {LogRecordData}s.
+          def emitted_log_records
             @mutex.synchronize do
-              @finished_log_records.clone.freeze
+              @emitted_log_records.clone.freeze
             end
           end
 
-          # Clears the internal collection of finished {LogRecord}s.
+          # Clears the internal collection of emitted {LogRecord}s.
           #
           # Does not reset the state of this exporter if already shutdown.
           def reset
             @mutex.synchronize do
-              @finished_log_records.clear
+              @emitted_log_records.clear
             end
           end
 
@@ -68,7 +69,7 @@ module OpenTelemetry
             @mutex.synchronize do
               return FAILURE if @stopped
 
-              @finished_log_records.concat(log_record_datas.to_a)
+              @emitted_log_records.concat(log_record_datas.to_a)
             end
             SUCCESS
           end
@@ -91,7 +92,7 @@ module OpenTelemetry
           #   non-specific failure occurred, TIMEOUT if a timeout occurred.
           def shutdown(timeout: nil)
             @mutex.synchronize do
-              @finished_log_records.clear
+              @emitted_log_records.clear
               @stopped = true
             end
             SUCCESS
