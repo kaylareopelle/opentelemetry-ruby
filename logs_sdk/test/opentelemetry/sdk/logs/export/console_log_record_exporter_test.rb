@@ -6,13 +6,12 @@
 
 require 'test_helper'
 
-# rubocop:disable Lint/ConstantDefinitionInBlock
 describe OpenTelemetry::SDK::Logs::Export::ConsoleLogRecordExporter do
-  Export = OpenTelemetry::SDK::Logs::Export
+  Export = OpenTelemetry::SDK::Logs::Export # rubocop:disable Lint/ConstantDefinitionInBlock
 
   let(:captured_stdout)  { StringIO.new }
-  let(:log_record_data1) { OpenTelemetry::SDK::Logs::LogRecordData.new({ body: 'body1' }) }
-  let(:log_record_data2) { OpenTelemetry::SDK::Logs::LogRecordData.new({ body: 'body2' }) }
+  let(:log_record_data1) { OpenTelemetry::SDK::Logs::LogRecordData.new }
+  let(:log_record_data2) { OpenTelemetry::SDK::Logs::LogRecordData.new }
   let(:log_records)      { [log_record_data1, log_record_data2] }
   let(:exporter)         { Export::ConsoleLogRecordExporter.new }
 
@@ -55,4 +54,3 @@ describe OpenTelemetry::SDK::Logs::Export::ConsoleLogRecordExporter do
     assert_equal(Export::FAILURE, exporter.export(log_records))
   end
 end
-# rubocop:enable Lint/ConstantDefinitionInBlock
