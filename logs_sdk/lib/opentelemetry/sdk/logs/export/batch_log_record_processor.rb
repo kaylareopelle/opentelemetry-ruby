@@ -185,12 +185,10 @@ module OpenTelemetry
           end
 
           def export_batch(batch, timeout: @exporter_timeout_seconds)
-            puts "batch.size: #{batch.size}\n\n"
             result_code = @export_mutex.synchronize { @exporter.export(batch, timeout: timeout) }
             report_result(result_code, batch)
-            puts "result_code: #{result_code}"
+            result_code
           rescue StandardError => e
-            puts "error! #{e}"
             report_result(FAILURE, batch)
             OpenTelemetry.handle_error(exception: e, message: 'unexpected error in BatchLogRecordProcessor#export_batch')
           end
@@ -204,7 +202,6 @@ module OpenTelemetry
           end
 
           def report_dropped_log_records(count, reason:)
-            puts "count: #{count}, reason: #{reason}"
             OpenTelemetry.logger.warn("#{count} log record(s) dropped. Reason: #{reason}")
           end
 
