@@ -6,6 +6,7 @@
 module OpenTelemetry
   module SDK
     module Logs
+      ExportError = Class.new(OpenTelemetry::Error)
       # The export module contains result codes for LoggerProvider#force_flush
       # and LoggerProvider#shutdown
       module Export
