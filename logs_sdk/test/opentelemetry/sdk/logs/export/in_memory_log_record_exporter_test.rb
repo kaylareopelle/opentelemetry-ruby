@@ -59,6 +59,10 @@ describe OpenTelemetry::SDK::Logs::Export::InMemoryLogRecordExporter do
     assert_equal(Export::SUCCESS, exporter.export([log_record_data1]))
   end
 
+  it 'returns success from #force_flush' do
+    assert_equal(Export::SUCCESS, exporter.force_flush)
+  end
+
   it 'returns error from #export after #shutdown called' do
     exporter.export([log_record_data1])
     exporter.shutdown
