@@ -26,3 +26,4 @@ end
 require_relative 'export/simple_log_record_processor'
 require_relative 'export/batch_log_record_processor'
 require_relative 'export/log_record_exporter'
+require_relative 'export/console_log_record_exporter'
