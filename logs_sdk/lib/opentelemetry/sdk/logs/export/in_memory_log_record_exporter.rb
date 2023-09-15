@@ -58,9 +58,9 @@ module OpenTelemetry
             end
           end
 
-          # Called to export sampled {LogRecordData}s.
+          # Called to export {LogRecordData}s.
           #
-          # @param [Enumerable<LogRecordData>] log_record_datas the list of sampled {LogRecordData}s to be
+          # @param [Enumerable<LogRecordData>] log_record_datas the list of {LogRecordData}s to be
           #   exported.
           # @param [optional Numeric] timeout An optional timeout in seconds.
           # @return [Integer] the result of the export, SUCCESS or
