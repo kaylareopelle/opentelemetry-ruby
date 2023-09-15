@@ -106,7 +106,8 @@ describe OpenTelemetry::SDK::Logs::LogRecord do
           default = Logs::LogRecordLimits::DEFAULT
 
           assert_equal(default.attribute_count_limit, log_record.instance_variable_get(:@log_record_limits).attribute_count_limit)
-          assert_equal(default.attribute_length_limit, log_record.instance_variable_get(:@log_record_limits).attribute_length_limit)
+          # default length is nil
+          assert_nil(log_record.instance_variable_get(:@log_record_limits).attribute_length_limit)
         end
 
         it 'trims the oldest attributes' do
