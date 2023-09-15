@@ -32,6 +32,10 @@ module OpenTelemetry
           logger_provider.resource
         end
 
+        def log_record_limits
+          logger_provider.log_record_limits
+        end
+
         # Emit a {LogRecord} to the processing pipeline.
         #
         # @param timestamp [optional Float, Time] Time in nanoseconds since Unix
