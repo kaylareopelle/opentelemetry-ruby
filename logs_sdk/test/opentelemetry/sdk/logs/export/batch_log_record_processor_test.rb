@@ -53,14 +53,11 @@ describe OpenTelemetry::SDK::Logs::Export::BatchLogRecordProcessor do
   end
 
   class TestLogRecord
-    def initialize(body = nil, sampled = true)
-      trace_flags = sampled ? OpenTelemetry::Trace::TraceFlags::SAMPLED : OpenTelemetry::Trace::TraceFlags::DEFAULT
-      @span_context = OpenTelemetry::Trace::SpanContext.new(trace_flags: trace_flags)
+    def initialize(body = nil)
       @body = body
-      @sampled = sampled
     end
 
-    attr_reader :body, :span_context
+    attr_reader :body
 
     def to_log_record_data
       self
@@ -182,13 +179,6 @@ describe OpenTelemetry::SDK::Logs::Export::BatchLogRecordProcessor do
   end
 
   describe '#emit' do
-    it 'does not add the log record if it is not sampled' do
-      unsampled_log_record = TestLogRecord.new(nil, false)
-      refute(unsampled_log_record.span_context.trace_flags.sampled?)
-      processor.emit(unsampled_log_record, mock_context)
-      refute_includes(processor.instance_variable_get(:@log_records), unsampled_log_record)
-    end
-
     it 'adds the log record to the batch' do
       processor.emit(log_record, mock_context)
 
@@ -384,16 +374,6 @@ describe OpenTelemetry::SDK::Logs::Export::BatchLogRecordProcessor do
       processor.shutdown
 
       _(exporter.batches[0].size).must_equal(3)
-    end
-
-    it 'should batch only sampled log records' do
-      processor = BatchLogRecordProcessor.new(exporter, max_queue_size: 6, max_export_batch_size: 3)
-
-      log_records = [TestLogRecord.new, TestLogRecord.new(nil, false)]
-      log_records.each { |log_record| processor.emit(log_record, mock_context) }
-      processor.shutdown
-
-      _(exporter.batches[0].size).must_equal(1)
     end
   end
 

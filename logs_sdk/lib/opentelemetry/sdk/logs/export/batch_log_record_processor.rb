@@ -69,7 +69,6 @@ module OpenTelemetry
 
           # Adds a log record to the batch. Thread-safe; may block on lock.
           def emit(log_record, _context)
-            return unless log_record.span_context.trace_flags.sampled?
             return if @stopped
 
             lock do
