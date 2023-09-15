@@ -75,9 +75,9 @@ module OpenTelemetry
           LogRecordData.new(
             @timestamp,
             @observed_timestamp,
-            @span_context.trace_id,
-            @span_context.span_id,
-            @span_context.trace_flags,
+            @span_context&.trace_id,
+            @span_context&.span_id,
+            @span_context&.trace_flags,
             @severity_text,
             @severity_number,
             @body,

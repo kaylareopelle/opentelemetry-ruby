@@ -10,6 +10,7 @@ describe OpenTelemetry::SDK::Logs::LogRecord do
   Logs = OpenTelemetry::SDK::Logs # rubocop:disable Lint/ConstantDefinitionInBlock
   let(:log_record) { Logs::LogRecord.new(**args) }
   let(:args) { {} }
+  let(:logger) { Logs::Logger.new('', '', Logs::LoggerProvider.new) }
 
   describe '#initialize' do
     describe 'observed_timestamp' do
@@ -57,6 +58,45 @@ describe OpenTelemetry::SDK::Logs::LogRecord do
           # return value class.
           assert_instance_of(Float, log_record.observed_timestamp)
         end
+      end
+    end
+
+    describe '#to_log_record_data' do
+      let(:args) do
+        {
+          timestamp: Process.clock_gettime(Process::CLOCK_REALTIME),
+          observed_timestamp: Process.clock_gettime(Process::CLOCK_REALTIME),
+          span_context: OpenTelemetry::Trace::SpanContext.new,
+          severity_text: 'DEBUG',
+          severity_number: 0,
+          body: 'body',
+          attributes: { 'a' => 'b' },
+          logger: logger
+        }
+      end
+
+      it 'transforms the LogRecord into a LogRecordData' do
+        log_record_data = log_record.to_log_record_data
+
+        assert_equal(args[:timestamp], log_record_data.timestamp)
+        assert_equal(args[:observed_timestamp], log_record_data.observed_timestamp)
+        assert_equal(args[:span_context].trace_id, log_record_data.trace_id)
+        assert_equal(args[:span_context].span_id, log_record_data.span_id)
+        assert_equal(args[:span_context].trace_flags, log_record_data.trace_flags)
+        assert_equal(args[:severity_text], log_record_data.severity_text)
+        assert_equal(args[:severity_number], log_record_data.severity_number)
+        assert_equal(args[:body], log_record_data.body)
+        assert_equal(args[:logger].resource, log_record_data.resource)
+        assert_equal(args[:logger].instrumentation_scope, log_record_data.instrumentation_scope)
+        assert_equal(args[:attributes], log_record_data.attributes)
+      end
+
+      it 'works if span_context is nil' do
+        log_record = Logs::LogRecord.new(span_context: nil)
+        log_record_data = log_record.to_log_record_data
+
+        assert_instance_of(Logs::LogRecordData, log_record_data)
+        assert_nil(log_record_data.trace_id)
       end
     end
 
