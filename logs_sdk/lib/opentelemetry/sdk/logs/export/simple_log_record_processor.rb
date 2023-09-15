@@ -43,8 +43,6 @@ module OpenTelemetry
           # @param [LogRecord] log_record The emitted {LogRecord}
           # @param [Context] _context The current {Context}
           def emit(log_record, _context)
-            # TODO: Add check for sampling, ex from SimpleSpanProcessor#on_finish:
-            # Wire this up when implementing log record limits
             return if @stopped
             # span_context is an optional attribute on a {LogRecord}
             return unless log_record&.span_context&.trace_flags&.sampled?
