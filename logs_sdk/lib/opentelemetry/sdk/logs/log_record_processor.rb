@@ -9,7 +9,6 @@ module OpenTelemetry
     module Logs
       # TODO: Implement diffs b/w spec for logs & traces:
       # Logs MUST: "decorate built-in processors for advanced scenarios such as enriching with attributes."
-      # Logs MUST: not allow subsequent calls to on emit after shutdown is called (Trace SDK must also not allow calls to force flush and should gracefully ignore if possible)
       class LogRecordProcessor
         # Called when a {LogRecord} is emitted. Subsequent calls are not
         # permitted after shutdown is called.
