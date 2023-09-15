@@ -21,9 +21,6 @@ describe OpenTelemetry::SDK::Logs::Export::SimpleLogRecordProcessor do
   end
 
   describe '#emit' do
-    let(:sampled_span_context) { OpenTelemetry::Trace::SpanContext.new(trace_flags: OpenTelemetry::Trace::TraceFlags::SAMPLED) }
-    let(:log_record) { OpenTelemetry::SDK::Logs::LogRecord.new(span_context: sampled_span_context) }
-
     it 'exports the log records' do
       mock_exporter = Minitest::Mock.new
       processor.instance_variable_set(:@log_record_exporter, mock_exporter)
@@ -58,19 +55,8 @@ describe OpenTelemetry::SDK::Logs::Export::SimpleLogRecordProcessor do
       processor.emit(log_record, mock_context)
     end
 
-    it 'does not export unless sampled' do
-      # SpanContext's default trace_flags are not sampled
-      log_record.instance_variable_set(:@span_context, OpenTelemetry::Trace::SpanContext.new)
-      refute(log_record.span_context.trace_flags.sampled?)
-      # raise if exporter's emit call is invoked
-      exporter.stub(:export, ->(_) { raise 'whoops!' }) do
-        processor.emit(log_record, mock_context)
-      end
-    end
-
     it 'catches and logs exporter errors' do
       error_message = 'uh oh'
-      log_record.span_context = sampled_span_context
       logger_mock = Minitest::Mock.new
       logger_mock.expect(:error, nil, [/#{error_message}/])
       # raise if exporter's emit call is invoked

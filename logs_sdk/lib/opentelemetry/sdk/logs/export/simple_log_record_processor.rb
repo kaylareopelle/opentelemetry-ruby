@@ -44,10 +44,7 @@ module OpenTelemetry
           # @param [Context] _context The current {Context}
           def emit(log_record, _context)
             return if @stopped
-            # span_context is an optional attribute on a {LogRecord}
-            return unless log_record&.span_context&.trace_flags&.sampled?
 
-            # TODO: do we want log record data?
             @log_record_exporter&.export([log_record.to_log_record_data])
           rescue => e # rubocop:disable Style/RescueStandardError
             OpenTelemetry.handle_error(exception: e, message: 'Unexpected error in Logger#emit')
