@@ -9,7 +9,7 @@ module OpenTelemetry
     module Logs
       # The SDK implementation of OpenTelemetry::Logs::LoggerProvider.
       class LoggerProvider < OpenTelemetry::Logs::LoggerProvider
-        attr_reader :resource
+        attr_reader :resource, :log_record_processors, :log_record_limits
 
         UNEXPECTED_ERROR_MESSAGE = 'unexpected error in ' \
           'OpenTelemetry::SDK::Logs::LoggerProvider#%s'
@@ -22,8 +22,13 @@ module OpenTelemetry
         #   new LogRecords created by {Logger}s created by this LoggerProvider.
         #
         # @return [OpenTelemetry::SDK::Logs::LoggerProvider]
-        def initialize(resource: OpenTelemetry::SDK::Resources::Resource.create)
-          @log_record_processors = []
+        def initialize(
+          resource: OpenTelemetry::SDK::Resources::Resource.create,
+          log_record_processors: [],
+          log_record_limits: LogRecordLimits::DEFAULT
+        )
+          @log_record_processors = log_record_processors
+          @log_record_limits = log_record_limits
           @mutex = Mutex.new
           @resource = resource
           @stopped = false

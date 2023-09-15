@@ -24,6 +24,12 @@ describe OpenTelemetry::SDK::Logs::LoggerProvider do
     end
   end
 
+  describe '#initialize' do
+    it 'activates a default LogRecordLimits' do
+      assert_equal(OpenTelemetry::SDK::Logs::LogRecordLimits::DEFAULT, logger_provider.log_record_limits)
+    end
+  end
+
   describe '#add_log_record_processor' do
     it "adds the processor to the logger provider's processors" do
       assert_equal(0, logger_provider.instance_variable_get(:@log_record_processors).length)

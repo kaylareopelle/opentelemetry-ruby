@@ -9,6 +9,10 @@ module OpenTelemetry
     module Logs
       # Implementation of OpenTelemetry::Logs::LogRecord that records log events.
       class LogRecord < OpenTelemetry::Logs::LogRecord
+        EMPTY_ATTRIBUTES = {}.freeze
+
+        private_constant :EMPTY_ATTRIBUTES
+
         attr_accessor :timestamp,
                       :observed_timestamp,
                       :span_context,
@@ -62,8 +66,9 @@ module OpenTelemetry
           @body = body
           @resource = logger&.resource
           @instrumentation_scope = logger&.instrumentation_scope
-          # TODO: Give attributes more love when working on limits, Issue #1516
-          @attributes = attributes
+          @log_record_limits = logger&.log_record_limits || LogRecordLimits::DEFAULT
+          @attributes = attributes.nil? ? nil : Hash[attributes] # We need a mutable copy of attributes
+          trim_attributes(@attributes)
         end
 
         def to_log_record_data
@@ -80,6 +85,26 @@ module OpenTelemetry
             @instrumentation_scope,
             @attributes
           )
+        end
+
+        private
+
+        def trim_attributes(attributes)
+          return if attributes.nil?
+
+          excess = attributes.size - @log_record_limits.attribute_count_limit
+          excess.times { attributes.shift } if excess.positive?
+          truncate_attribute_values(attributes, @log_record_limits.attribute_length_limit)
+          nil
+        end
+
+        def truncate_attribute_values(attributes, attribute_length_limit)
+          return EMPTY_ATTRIBUTES if attributes.nil?
+          return attributes if attribute_length_limit.nil?
+
+          attributes.transform_values! { |value| OpenTelemetry::Common::Utilities.truncate_attribute_value(value, attribute_length_limit) }
+
+          attributes
         end
       end
     end

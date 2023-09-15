@@ -7,7 +7,8 @@
 require 'test_helper'
 
 describe OpenTelemetry::SDK::Logs::LogRecord do
-  let(:log_record) { OpenTelemetry::SDK::Logs::LogRecord.new(**args) }
+  Logs = OpenTelemetry::SDK::Logs # rubocop:disable Lint/ConstantDefinitionInBlock
+  let(:log_record) { Logs::LogRecord.new(**args) }
   let(:args) { {} }
 
   describe '#initialize' do
@@ -60,10 +61,10 @@ describe OpenTelemetry::SDK::Logs::LogRecord do
     end
 
     describe 'attributes set through logger' do
-      let(:logger_provider) { OpenTelemetry::SDK::Logs::LoggerProvider.new }
+      let(:logger_provider) { Logs::LoggerProvider.new }
       let(:resource) { OpenTelemetry::SDK::Resources::Resource.create }
       let(:instrumentation_scope) { OpenTelemetry::SDK::InstrumentationScope.new('name', 'version') }
-      let(:logger) { OpenTelemetry::SDK::Logs::Logger.new(resource, instrumentation_scope, logger_provider) }
+      let(:logger) { Logs::Logger.new(resource, instrumentation_scope, logger_provider) }
       let(:args) { { logger: logger } }
 
       describe 'resource' do
@@ -87,6 +88,60 @@ describe OpenTelemetry::SDK::Logs::LogRecord do
 
         it 'sets the instrumentation_scope to nil' do
           assert_nil(log_record.instrumentation_scope)
+        end
+      end
+
+      describe 'attribute limits' do
+        it 'uses the limits set by the logger provider via the logger' do
+          limits = Logs::LogRecordLimits.new
+          logger_provider = Logs::LoggerProvider.new(log_record_limits: limits)
+          logger = Logs::Logger.new('', '', logger_provider)
+          log_record = Logs::LogRecord.new(logger: logger)
+
+          assert_equal(log_record.instance_variable_get(:@log_record_limits), limits)
+        end
+
+        it 'uses the default limits if none provided' do
+          log_record = Logs::LogRecord.new
+          default = Logs::LogRecordLimits::DEFAULT
+
+          assert_equal(default.attribute_count_limit, log_record.instance_variable_get(:@log_record_limits).attribute_count_limit)
+          assert_equal(default.attribute_length_limit, log_record.instance_variable_get(:@log_record_limits).attribute_length_limit)
+        end
+
+        it 'trims the oldest attributes' do
+          limits = Logs::LogRecordLimits.new(attribute_count_limit: 1)
+          logger_provider = Logs::LoggerProvider.new(log_record_limits: limits)
+          logger = Logs::Logger.new('', '', logger_provider)
+          attributes = { 'old' => 'old', 'new' => 'new' }
+          log_record = Logs::LogRecord.new(logger: logger, attributes: attributes)
+
+          assert_equal({ 'new' => 'new' }, log_record.attributes)
+        end
+      end
+
+      describe 'attribute value limit' do
+        it 'truncates the values that are too long' do
+          length_limit = 32
+          too_long = 'a' * (length_limit + 1)
+          just_right = 'a' * (length_limit - 3) # truncation removes 3 chars for the '...'
+          limits = Logs::LogRecordLimits.new(attribute_length_limit: length_limit)
+          logger_provider = Logs::LoggerProvider.new(log_record_limits: limits)
+          logger = Logs::Logger.new('', '', logger_provider)
+          log_record = Logs::LogRecord.new(logger: logger, attributes: { 'key' => too_long })
+
+          assert_equal({ 'key' => "#{just_right}..." }, log_record.attributes)
+        end
+
+        it 'does not alter values within the range' do
+          length_limit = 32
+          within_range = 'a' * length_limit
+          limits = Logs::LogRecordLimits.new(attribute_length_limit: length_limit)
+          logger_provider = Logs::LoggerProvider.new(log_record_limits: limits)
+          logger = Logs::Logger.new('', '', logger_provider)
+          log_record = Logs::LogRecord.new(logger: logger, attributes: { 'key' => within_range })
+
+          assert_equal({ 'key' => within_range }, log_record.attributes)
         end
       end
     end
