@@ -19,7 +19,6 @@ module OpenTelemetry
         #
         # @return [LogRecordLimits] with the desired values.
         # @raise [ArgumentError] if any of the max numbers are not positive.
-        # TODO: The tests don't seem to respect the OTEL_ATTRIBUTE numbers
         def initialize(attribute_count_limit: Integer(OpenTelemetry::Common::Utilities.config_opt(
                                                         'OTEL_LOG_RECORD_ATTRIBUTE_COUNT_LIMIT',
                                                         'OTEL_ATTRIBUTE_COUNT_LIMIT',
