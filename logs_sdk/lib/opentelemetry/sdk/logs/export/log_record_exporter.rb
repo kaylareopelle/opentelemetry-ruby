@@ -11,8 +11,7 @@ module OpenTelemetry
         # LogRecordExporter describes a duck type. It is not required to
         # subclass this class to provide an implementation of LogRecordExporter,
         # provided the interface is satisfied. LogRecordExporter allows
-        # different tracing services to export recorded data for sampled
-        # log records in their own format.
+        # different tracing services to export log record data in their own format.
         #
         # To export data an exporter MUST be registered to the {LoggerProvider}
         # using a {LogRecordProcessor} implementation.
@@ -21,10 +20,10 @@ module OpenTelemetry
             @stopped = false
           end
 
-          # Called to export sampled {LogRecordData}s.
+          # Called to export {LogRecordData}s.
           #
           # @param [Enumerable<LogRecordData>] log_record_data the list of
-          # sampled {LogRecordData} to be exported.
+          # {LogRecordData} to be exported.
           # @param [optional Numeric] timeout An optional timeout in seconds.
           #
           # @return [Integer] the result of the export.
