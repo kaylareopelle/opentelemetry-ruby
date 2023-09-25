@@ -9,12 +9,10 @@ module OpenTelemetry
     module Logs
       # The SDK implementation of OpenTelemetry::Logs::LoggerProvider.
       class LoggerProvider < OpenTelemetry::Logs::LoggerProvider
-        attr_reader :resource, :log_record_processors, :log_record_limits
+        Key = Struct.new(:name, :version)
+        private_constant(:Key)
 
-        EMPTY_NAME_ERROR = 'LoggerProvider#logger called without '\
-          'providing a logger name.'
-        FORCE_FLUSH_ERROR = 'unexpected error in ' \
-          'OpenTelemetry::SDK::Logs::LoggerProvider#force_flush'
+        attr_reader :resource, :log_record_processors, :log_record_limits
 
         # Returns a new LoggerProvider instance.
         #
@@ -34,6 +32,8 @@ module OpenTelemetry
           @mutex = Mutex.new
           @resource = resource
           @stopped = false
+          @registry = {}
+          @registry_mutex = Mutex.new
         end
 
         # Creates an {OpenTelemetry::SDK::Logs::Logger} instance.
@@ -43,13 +43,21 @@ module OpenTelemetry
         #
         # @return [OpenTelemetry::SDK::Logs::Logger]
         def logger(name = nil, version = nil)
-          name ||= ''
-          version ||= ''
+          if @stopped
+            OpenTelemetry.logger.warn('calling LoggerProvider#logger after shutdown, a noop logger will be returned')
+            OpenTelemetry::Logs::LoggerProvider::NOOP_LOGGER
+          else
+            name ||= ''
+            version ||= ''
 
-          OpenTelemetry.logger.warn(EMPTY_NAME_ERROR) if name.empty?
+            if name.empty?
+              OpenTelemetry.logger.warn('LoggerProvider#logger called without '\
+                'providing a logger name.')
+            end
 
-          @mutex.synchronize do
-            OpenTelemetry::SDK::Logs::Logger.new(name, version, self)
+            @registry_mutex.synchronize do
+              @registry[Key.new(name, version)] ||= Logger.new(name, version, self)
+            end
           end
         end
 
@@ -122,7 +130,7 @@ module OpenTelemetry
             results.max || Export::SUCCESS
           end
         rescue StandardError => e
-          OpenTelemetry.handle_error(exception: e, message: FORCE_FLUSH_ERROR)
+          OpenTelemetry.handle_error(exception: e, message: 'unexpected error in OpenTelemetry::SDK::Logs::LoggerProvider#force_flush')
           Export::FAILURE
         end
       end
