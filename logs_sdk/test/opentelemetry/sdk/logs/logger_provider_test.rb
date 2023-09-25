@@ -44,7 +44,7 @@ describe OpenTelemetry::SDK::Logs::LoggerProvider do
       OpenTelemetry::TestHelpers.with_test_logger do |log_stream|
         logger_provider.logger(nil)
         assert_match(
-          /#{OpenTelemetry::SDK::Logs::LoggerProvider::EMPTY_NAME_ERROR}/,
+          /LoggerProvider#logger called without providing a logger name./,
           log_stream.string
         )
       end
@@ -54,7 +54,7 @@ describe OpenTelemetry::SDK::Logs::LoggerProvider do
       OpenTelemetry::TestHelpers.with_test_logger do |log_stream|
         logger_provider.logger('')
         assert_match(
-          /#{OpenTelemetry::SDK::Logs::LoggerProvider::EMPTY_NAME_ERROR}/,
+          /LoggerProvider#logger called without providing a logger name./,
           log_stream.string
         )
       end
@@ -78,12 +78,15 @@ describe OpenTelemetry::SDK::Logs::LoggerProvider do
       assert_equal(logger.instrumentation_scope.version, version)
     end
 
-    it 'creates a new logger when name and version are missing' do
+    # On the first call, create a logger with an empty string for name and
+    # version and add to the registry. The second call returns that logger
+    # from the registry instead of creating a new instance.
+    it 'reuses the same logger if called twice when name and version are nil' do
       logger = logger_provider.logger
       logger2 = logger_provider.logger
 
-      refute_same(logger, logger2)
       assert_instance_of(OpenTelemetry::SDK::Logs::Logger, logger)
+      assert_same(logger, logger2)
     end
   end
 
