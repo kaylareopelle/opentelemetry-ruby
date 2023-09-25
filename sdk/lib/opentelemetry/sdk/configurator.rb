@@ -132,7 +132,7 @@ module OpenTelemetry
       # at each stage. The setup process is:
       #   - setup logging
       #   - setup propagation
-      #   - setup tracer_provider and meter_provider
+      #   - setup tracer_provider, meter_provider, and logger_provider
       #   - install instrumentation
       def configure
         OpenTelemetry.logger = logger
@@ -142,12 +142,15 @@ module OpenTelemetry
         tracer_provider.id_generator = @id_generator
         OpenTelemetry.tracer_provider = tracer_provider
         metrics_configuration_hook
+        logs_configuration_hook
         install_instrumentation
       end
 
       private
 
       def metrics_configuration_hook; end
+
+      def logs_configuration_hook; end
 
       def tracer_provider
         @tracer_provider ||= Trace::TracerProvider.new(resource: @resource)
@@ -179,7 +182,6 @@ module OpenTelemetry
           when 'none' then nil
           when 'otlp'
             otlp_protocol = ENV['OTEL_EXPORTER_OTLP_TRACES_PROTOCOL'] || ENV['OTEL_EXPORTER_OTLP_PROTOCOL'] || 'http/protobuf'
-
             if otlp_protocol != 'http/protobuf'
               OpenTelemetry.logger.warn "The #{otlp_protocol} transport protocol is not supported by the OTLP exporter, spans will not be exported."
               nil
@@ -224,7 +226,7 @@ module OpenTelemetry
 
       def fetch_exporter(name, class_name)
         Trace::Export::BatchSpanProcessor.new(Kernel.const_get(class_name).new)
-      rescue NameError
+      rescue NameError => e
         OpenTelemetry.logger.warn "The #{name} exporter cannot be configured - please add opentelemetry-exporter-#{name} to your Gemfile, spans will not be exported"
         nil
       end
