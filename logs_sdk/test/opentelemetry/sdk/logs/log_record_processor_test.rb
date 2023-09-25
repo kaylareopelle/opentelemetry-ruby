@@ -11,8 +11,8 @@ describe OpenTelemetry::SDK::Logs::LogRecordProcessor do
   let(:log_record) { nil }
   let(:context)    { nil }
 
-  it 'implements #on_emit' do
-    processor.on_emit(log_record, context)
+  it 'implements #emit' do
+    processor.emit(log_record, context)
   end
 
   it 'implements #force_flush' do

@@ -15,7 +15,7 @@ module OpenTelemetry
         # @param [LogRecord] log_record The emitted {ReadWriteLogRecord}
         # @param [Context] context The resolved Context
         # TODO: Context or SpanContext here? What's the difference?
-        def on_emit(log_record, context); end
+        def emit(log_record, context); end
 
         # Export all log records to the configured `Exporter` that have not yet
         # been exported.
