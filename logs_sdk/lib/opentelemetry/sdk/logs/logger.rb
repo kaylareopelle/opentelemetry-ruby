@@ -4,6 +4,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+require_relative '../../../../../logs_api/lib/opentelemetry-logs-api'
+
 module OpenTelemetry
   module SDK
     module Logs
@@ -70,7 +72,7 @@ module OpenTelemetry
                  attributes: nil)
           log_record = LogRecord.new(timestamp: timestamp,
                                      observed_timestamp: observed_timestamp,
-                                     span_context: span_context,
+                                     span_context: span_context ||= OpenTelemetry::Trace.current_span.context,
                                      severity_text: severity_text,
                                      severity_number: severity_number,
                                      body: body,
@@ -78,7 +80,7 @@ module OpenTelemetry
                                      logger: self)
 
           logger_provider.log_record_processors.each do |processor|
-            processor.emit(log_record)
+            processor.emit(log_record, span_context)
           end
         end
       end
