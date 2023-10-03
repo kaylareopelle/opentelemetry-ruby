@@ -22,6 +22,10 @@ module OpenTelemetry
         #
         # @param [optional Resource] resource The resource to associate with
         #   new LogRecords created by {Logger}s created by this LoggerProvider.
+        # @param [optional Array] log_record_processors The
+        #   {LogRecordProcessor}s to associate with this LoggerProvider.
+        # @param [optional LogRecordLimits] log_record_limits The limits for
+        #   attributes count and attribute length for LogRecords.
         #
         # @return [OpenTelemetry::SDK::Logs::LoggerProvider]
         def initialize(
