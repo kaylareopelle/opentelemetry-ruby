@@ -7,15 +7,15 @@ require 'test_helper'
 require 'google/protobuf/wrappers_pb'
 require 'google/protobuf/well_known_types'
 
-describe OpenTelemetry::Exporter::OTLP::Exporter do
+describe OpenTelemetry::Exporter::OTLP::LogsExporter do
   SUCCESS = OpenTelemetry::SDK::Logs::Export::SUCCESS
   FAILURE = OpenTelemetry::SDK::Logs::Export::FAILURE
   VERSION = OpenTelemetry::Exporter::OTLP::VERSION
-  DEFAULT_USER_AGENT = OpenTelemetry::Exporter::OTLP::Exporter::DEFAULT_USER_AGENT
+  DEFAULT_USER_AGENT = OpenTelemetry::Exporter::OTLP::LogsExporter::DEFAULT_USER_AGENT
 
   describe '#initialize' do
     it 'initializes with defaults' do
-      exp = OpenTelemetry::Exporter::OTLP::Exporter.new
+      exp = OpenTelemetry::Exporter::OTLP::LogsExporter.new
       _(exp).wont_be_nil
       _(exp.instance_variable_get(:@headers)).must_equal('User-Agent' => DEFAULT_USER_AGENT)
       _(exp.instance_variable_get(:@timeout)).must_equal 10.0
@@ -40,24 +40,24 @@ describe OpenTelemetry::Exporter::OTLP::Exporter do
 
     it 'refuses invalid endpoint' do
       assert_raises ArgumentError do
-        OpenTelemetry::Exporter::OTLP::Exporter.new(endpoint: 'not a url')
+        OpenTelemetry::Exporter::OTLP::LogsExporter.new(endpoint: 'not a url')
       end
     end
 
     it 'uses endpoints path if provided' do
-      exp = OpenTelemetry::Exporter::OTLP::Exporter.new(endpoint: 'https://localhost/custom/path')
+      exp = OpenTelemetry::Exporter::OTLP::LogsExporter.new(endpoint: 'https://localhost/custom/path')
       _(exp.instance_variable_get(:@path)).must_equal '/custom/path'
     end
 
     it 'only allows gzip compression or none' do
       assert_raises ArgumentError do
-        OpenTelemetry::Exporter::OTLP::Exporter.new(compression: 'flate')
+        OpenTelemetry::Exporter::OTLP::LogsExporter.new(compression: 'flate')
       end
-      exp = OpenTelemetry::Exporter::OTLP::Exporter.new(compression: nil)
+      exp = OpenTelemetry::Exporter::OTLP::LogsExporter.new(compression: nil)
       _(exp.instance_variable_get(:@compression)).must_be_nil
 
       %w[gzip none].each do |compression|
-        exp = OpenTelemetry::Exporter::OTLP::Exporter.new(compression: compression)
+        exp = OpenTelemetry::Exporter::OTLP::LogsExporter.new(compression: compression)
         _(exp.instance_variable_get(:@compression)).must_equal(compression)
       end
 
@@ -68,7 +68,7 @@ describe OpenTelemetry::Exporter::OTLP::Exporter do
         { envar: 'OTEL_EXPORTER_OTLP_LOGS_COMPRESSION', value: 'none' }
       ].each do |example|
         OpenTelemetry::TestHelpers.with_env(example[:envar] => example[:value]) do
-          exp = OpenTelemetry::Exporter::OTLP::Exporter.new
+          exp = OpenTelemetry::Exporter::OTLP::LogsExporter.new
           _(exp.instance_variable_get(:@compression)).must_equal(example[:value])
         end
       end
@@ -81,7 +81,7 @@ describe OpenTelemetry::Exporter::OTLP::Exporter do
                                                 'OTEL_EXPORTER_OTLP_COMPRESSION' => 'gzip',
                                                 'OTEL_RUBY_EXPORTER_OTLP_SSL_VERIFY_NONE' => 'true',
                                                 'OTEL_EXPORTER_OTLP_TIMEOUT' => '11') do
-        OpenTelemetry::Exporter::OTLP::Exporter.new
+        OpenTelemetry::Exporter::OTLP::LogsExporter.new
       end
       _(exp.instance_variable_get(:@headers)).must_equal('a' => 'b', 'c' => 'd', 'User-Agent' => DEFAULT_USER_AGENT)
       _(exp.instance_variable_get(:@timeout)).must_equal 11.0
@@ -102,7 +102,7 @@ describe OpenTelemetry::Exporter::OTLP::Exporter do
                                                 'OTEL_EXPORTER_OTLP_COMPRESSION' => 'flate',
                                                 'OTEL_RUBY_EXPORTER_OTLP_SSL_VERIFY_PEER' => 'true',
                                                 'OTEL_EXPORTER_OTLP_TIMEOUT' => '11') do
-        OpenTelemetry::Exporter::OTLP::Exporter.new(endpoint: 'http://localhost:4321',
+        OpenTelemetry::Exporter::OTLP::LogsExporter.new(endpoint: 'http://localhost:4321',
                                                     certificate_file: '/baz',
                                                     headers: { 'x' => 'y' },
                                                     compression: 'gzip',
@@ -125,7 +125,7 @@ describe OpenTelemetry::Exporter::OTLP::Exporter do
       exp = OpenTelemetry::TestHelpers.with_env(
         'OTEL_EXPORTER_OTLP_ENDPOINT' => 'https://localhost:1234/'
       ) do
-        OpenTelemetry::Exporter::OTLP::Exporter.new()
+        OpenTelemetry::Exporter::OTLP::LogsExporter.new()
       end
       _(exp.instance_variable_get(:@path)).must_equal '/v1/logs'
     end
@@ -134,20 +134,20 @@ describe OpenTelemetry::Exporter::OTLP::Exporter do
       exp = OpenTelemetry::TestHelpers.with_env(
         'OTEL_EXPORTER_OTLP_ENDPOINT' => 'https://localhost:1234'
       ) do
-        OpenTelemetry::Exporter::OTLP::Exporter.new()
+        OpenTelemetry::Exporter::OTLP::LogsExporter.new()
       end
       _(exp.instance_variable_get(:@path)).must_equal '/v1/logs'
     end
 
     it 'restricts explicit headers to a String or Hash' do
-      exp = OpenTelemetry::Exporter::OTLP::Exporter.new(headers: { 'token' => 'über' })
+      exp = OpenTelemetry::Exporter::OTLP::LogsExporter.new(headers: { 'token' => 'über' })
       _(exp.instance_variable_get(:@headers)).must_equal('token' => 'über', 'User-Agent' => DEFAULT_USER_AGENT)
 
-      exp = OpenTelemetry::Exporter::OTLP::Exporter.new(headers: 'token=%C3%BCber')
+      exp = OpenTelemetry::Exporter::OTLP::LogsExporter.new(headers: 'token=%C3%BCber')
       _(exp.instance_variable_get(:@headers)).must_equal('token' => 'über', 'User-Agent' => DEFAULT_USER_AGENT)
 
       error = _() {
-        exp = OpenTelemetry::Exporter::OTLP::Exporter.new(headers: Object.new)
+        exp = OpenTelemetry::Exporter::OTLP::LogsExporter.new(headers: Object.new)
         _(exp.instance_variable_get(:@headers)).must_equal('token' => 'über')
       }.must_raise(ArgumentError)
       _(error.message).must_match(/headers/i)
@@ -155,7 +155,7 @@ describe OpenTelemetry::Exporter::OTLP::Exporter do
 
     it 'ignores later mutations of a headers Hash parameter' do
       a_hash_to_mutate_later = { 'token' => 'über' }
-      exp = OpenTelemetry::Exporter::OTLP::Exporter.new(headers: a_hash_to_mutate_later)
+      exp = OpenTelemetry::Exporter::OTLP::LogsExporter.new(headers: a_hash_to_mutate_later)
       _(exp.instance_variable_get(:@headers)).must_equal('token' => 'über', 'User-Agent' => DEFAULT_USER_AGENT)
 
       a_hash_to_mutate_later['token'] = 'unter'
@@ -166,60 +166,60 @@ describe OpenTelemetry::Exporter::OTLP::Exporter do
     describe 'Headers Environment Variable' do
       it 'allows any number of the equal sign (=) characters in the value' do
         exp = OpenTelemetry::TestHelpers.with_env('OTEL_EXPORTER_OTLP_HEADERS' => 'a=b,c=d==,e=f') do
-          OpenTelemetry::Exporter::OTLP::Exporter.new
+          OpenTelemetry::Exporter::OTLP::LogsExporter.new
         end
         _(exp.instance_variable_get(:@headers)).must_equal('a' => 'b', 'c' => 'd==', 'e' => 'f', 'User-Agent' => DEFAULT_USER_AGENT)
 
         exp = OpenTelemetry::TestHelpers.with_env('OTEL_EXPORTER_OTLP_LOGS_HEADERS' => 'a=b,c=d==,e=f') do
-          OpenTelemetry::Exporter::OTLP::Exporter.new
+          OpenTelemetry::Exporter::OTLP::LogsExporter.new
         end
         _(exp.instance_variable_get(:@headers)).must_equal('a' => 'b', 'c' => 'd==', 'e' => 'f', 'User-Agent' => DEFAULT_USER_AGENT)
       end
 
       it 'trims any leading or trailing whitespaces in keys and values' do
         exp = OpenTelemetry::TestHelpers.with_env('OTEL_EXPORTER_OTLP_HEADERS' => 'a =  b  ,c=d , e=f') do
-          OpenTelemetry::Exporter::OTLP::Exporter.new
+          OpenTelemetry::Exporter::OTLP::LogsExporter.new
         end
         _(exp.instance_variable_get(:@headers)).must_equal('a' => 'b', 'c' => 'd', 'e' => 'f', 'User-Agent' => DEFAULT_USER_AGENT)
 
         exp = OpenTelemetry::TestHelpers.with_env('OTEL_EXPORTER_OTLP_LOGS_HEADERS' => 'a =  b  ,c=d , e=f') do
-          OpenTelemetry::Exporter::OTLP::Exporter.new
+          OpenTelemetry::Exporter::OTLP::LogsExporter.new
         end
         _(exp.instance_variable_get(:@headers)).must_equal('a' => 'b', 'c' => 'd', 'e' => 'f', 'User-Agent' => DEFAULT_USER_AGENT)
       end
 
       it 'decodes values as URL encoded UTF-8 strings' do
         exp = OpenTelemetry::TestHelpers.with_env('OTEL_EXPORTER_OTLP_HEADERS' => 'token=%C3%BCber') do
-          OpenTelemetry::Exporter::OTLP::Exporter.new
+          OpenTelemetry::Exporter::OTLP::LogsExporter.new
         end
         _(exp.instance_variable_get(:@headers)).must_equal('token' => 'über', 'User-Agent' => DEFAULT_USER_AGENT)
 
         exp = OpenTelemetry::TestHelpers.with_env('OTEL_EXPORTER_OTLP_HEADERS' => '%C3%BCber=token') do
-          OpenTelemetry::Exporter::OTLP::Exporter.new
+          OpenTelemetry::Exporter::OTLP::LogsExporter.new
         end
         _(exp.instance_variable_get(:@headers)).must_equal('über' => 'token', 'User-Agent' => DEFAULT_USER_AGENT)
 
         exp = OpenTelemetry::TestHelpers.with_env('OTEL_EXPORTER_OTLP_LOGS_HEADERS' => 'token=%C3%BCber') do
-          OpenTelemetry::Exporter::OTLP::Exporter.new
+          OpenTelemetry::Exporter::OTLP::LogsExporter.new
         end
         _(exp.instance_variable_get(:@headers)).must_equal('token' => 'über', 'User-Agent' => DEFAULT_USER_AGENT)
 
         exp = OpenTelemetry::TestHelpers.with_env('OTEL_EXPORTER_OTLP_LOGS_HEADERS' => '%C3%BCber=token') do
-          OpenTelemetry::Exporter::OTLP::Exporter.new
+          OpenTelemetry::Exporter::OTLP::LogsExporter.new
         end
         _(exp.instance_variable_get(:@headers)).must_equal('über' => 'token', 'User-Agent' => DEFAULT_USER_AGENT)
       end
 
       it 'appends the default user agent to one provided in config' do
         exp = OpenTelemetry::TestHelpers.with_env('OTEL_EXPORTER_OTLP_HEADERS' => 'User-Agent=%C3%BCber/3.2.1') do
-          OpenTelemetry::Exporter::OTLP::Exporter.new
+          OpenTelemetry::Exporter::OTLP::LogsExporter.new
         end
         _(exp.instance_variable_get(:@headers)).must_equal('User-Agent' => "über/3.2.1 #{DEFAULT_USER_AGENT}")
       end
 
       it 'prefers LOGS specific variable' do
         exp = OpenTelemetry::TestHelpers.with_env('OTEL_EXPORTER_OTLP_HEADERS' => 'a=b,c=d==,e=f', 'OTEL_EXPORTER_OTLP_LOGS_HEADERS' => 'token=%C3%BCber') do
-          OpenTelemetry::Exporter::OTLP::Exporter.new
+          OpenTelemetry::Exporter::OTLP::LogsExporter.new
         end
         _(exp.instance_variable_get(:@headers)).must_equal('token' => 'über', 'User-Agent' => DEFAULT_USER_AGENT)
       end
@@ -227,14 +227,14 @@ describe OpenTelemetry::Exporter::OTLP::Exporter do
       it 'fails fast when header values are missing' do
         error = _() {
           OpenTelemetry::TestHelpers.with_env('OTEL_EXPORTER_OTLP_HEADERS' => 'a = ') do
-            OpenTelemetry::Exporter::OTLP::Exporter.new
+            OpenTelemetry::Exporter::OTLP::LogsExporter.new
           end
         }.must_raise(ArgumentError)
         _(error.message).must_match(/headers/i)
 
         error = _() {
           OpenTelemetry::TestHelpers.with_env('OTEL_EXPORTER_OTLP_LOGS_HEADERS' => 'a = ') do
-            OpenTelemetry::Exporter::OTLP::Exporter.new
+            OpenTelemetry::Exporter::OTLP::LogsExporter.new
           end
         }.must_raise(ArgumentError)
         _(error.message).must_match(/headers/i)
@@ -243,14 +243,14 @@ describe OpenTelemetry::Exporter::OTLP::Exporter do
       it 'fails fast when header or values are not found' do
         error = _() {
           OpenTelemetry::TestHelpers.with_env('OTEL_EXPORTER_OTLP_HEADERS' => ',') do
-            OpenTelemetry::Exporter::OTLP::Exporter.new
+            OpenTelemetry::Exporter::OTLP::LogsExporter.new
           end
         }.must_raise(ArgumentError)
         _(error.message).must_match(/headers/i)
 
         error = _() {
           OpenTelemetry::TestHelpers.with_env('OTEL_EXPORTER_OTLP_LOGS_HEADERS' => ',') do
-            OpenTelemetry::Exporter::OTLP::Exporter.new
+            OpenTelemetry::Exporter::OTLP::LogsExporter.new
           end
         }.must_raise(ArgumentError)
         _(error.message).must_match(/headers/i)
@@ -259,14 +259,14 @@ describe OpenTelemetry::Exporter::OTLP::Exporter do
       it 'fails fast when header values contain invalid escape characters' do
         error = _() {
           OpenTelemetry::TestHelpers.with_env('OTEL_EXPORTER_OTLP_HEADERS' => 'c=hi%F3') do
-            OpenTelemetry::Exporter::OTLP::Exporter.new
+            OpenTelemetry::Exporter::OTLP::LogsExporter.new
           end
         }.must_raise(ArgumentError)
         _(error.message).must_match(/headers/i)
 
         error = _() {
           OpenTelemetry::TestHelpers.with_env('OTEL_EXPORTER_OTLP_LOGS_HEADERS' => 'c=hi%F3') do
-            OpenTelemetry::Exporter::OTLP::Exporter.new
+            OpenTelemetry::Exporter::OTLP::LogsExporter.new
           end
         }.must_raise(ArgumentError)
         _(error.message).must_match(/headers/i)
@@ -275,14 +275,14 @@ describe OpenTelemetry::Exporter::OTLP::Exporter do
       it 'fails fast when headers are invalid' do
         error = _() {
           OpenTelemetry::TestHelpers.with_env('OTEL_EXPORTER_OTLP_HEADERS' => 'this is not a header') do
-            OpenTelemetry::Exporter::OTLP::Exporter.new
+            OpenTelemetry::Exporter::OTLP::LogsExporter.new
           end
         }.must_raise(ArgumentError)
         _(error.message).must_match(/headers/i)
 
         error = _() {
           OpenTelemetry::TestHelpers.with_env('OTEL_EXPORTER_OTLP_LOGS_HEADERS' => 'this is not a header') do
-            OpenTelemetry::Exporter::OTLP::Exporter.new
+            OpenTelemetry::Exporter::OTLP::LogsExporter.new
           end
         }.must_raise(ArgumentError)
         _(error.message).must_match(/headers/i)
@@ -293,7 +293,7 @@ describe OpenTelemetry::Exporter::OTLP::Exporter do
   describe 'ssl_verify_mode:' do
     it 'can be set to VERIFY_NONE by an envvar' do
       exp = OpenTelemetry::TestHelpers.with_env('OTEL_RUBY_EXPORTER_OTLP_SSL_VERIFY_NONE' => 'true') do
-        OpenTelemetry::Exporter::OTLP::Exporter.new
+        OpenTelemetry::Exporter::OTLP::LogsExporter.new
       end
       http = exp.instance_variable_get(:@http)
       _(http.verify_mode).must_equal OpenSSL::SSL::VERIFY_NONE
@@ -301,7 +301,7 @@ describe OpenTelemetry::Exporter::OTLP::Exporter do
 
     it 'can be set to VERIFY_PEER by an envvar' do
       exp = OpenTelemetry::TestHelpers.with_env('OTEL_RUBY_EXPORTER_OTLP_SSL_VERIFY_PEER' => 'true') do
-        OpenTelemetry::Exporter::OTLP::Exporter.new
+        OpenTelemetry::Exporter::OTLP::LogsExporter.new
       end
       http = exp.instance_variable_get(:@http)
       _(http.verify_mode).must_equal OpenSSL::SSL::VERIFY_PEER
@@ -310,7 +310,7 @@ describe OpenTelemetry::Exporter::OTLP::Exporter do
     it 'VERIFY_PEER will override VERIFY_NONE' do
       exp = OpenTelemetry::TestHelpers.with_env('OTEL_RUBY_EXPORTER_OTLP_SSL_VERIFY_NONE' => 'true',
                                                 'OTEL_RUBY_EXPORTER_OTLP_SSL_VERIFY_PEER' => 'true') do
-        OpenTelemetry::Exporter::OTLP::Exporter.new
+        OpenTelemetry::Exporter::OTLP::LogsExporter.new
       end
       http = exp.instance_variable_get(:@http)
       _(http.verify_mode).must_equal OpenSSL::SSL::VERIFY_PEER
@@ -318,7 +318,7 @@ describe OpenTelemetry::Exporter::OTLP::Exporter do
   end
 
   describe '#export' do
-    let(:exporter) { OpenTelemetry::Exporter::OTLP::Exporter.new }
+    let(:exporter) { OpenTelemetry::Exporter::OTLP::LogsExporter.new }
 
     before do
       OpenTelemetry.logger_provider = OpenTelemetry::SDK::Logs::LoggerProvider.new(resource: OpenTelemetry::SDK::Resources::Resource.telemetry_sdk)
@@ -328,7 +328,7 @@ describe OpenTelemetry::Exporter::OTLP::Exporter do
       skip unless ENV['TRACING_INTEGRATION_TEST']
       WebMock.disable_net_connect!(allow: 'localhost')
       log_record_data = OpenTelemetry::TestHelpers.create_log_record_data
-      exporter = OpenTelemetry::Exporter::OTLP::Exporter.new(endpoint: 'http://localhost:4318', compression: 'gzip')
+      exporter = OpenTelemetry::Exporter::OTLP::LogsExporter.new(endpoint: 'http://localhost:4318', compression: 'gzip')
       result = exporter.export([log_record_data])
       _(result).must_equal(SUCCESS)
     end
@@ -409,7 +409,7 @@ describe OpenTelemetry::Exporter::OTLP::Exporter do
     end
 
     it 'returns FAILURE when encryption to receiver endpoint fails' do
-      exporter = OpenTelemetry::Exporter::OTLP::Exporter.new(endpoint: 'https://localhost:4318/v1/logs')
+      exporter = OpenTelemetry::Exporter::OTLP::LogsExporter.new(endpoint: 'https://localhost:4318/v1/logs')
       stub_request(:post, 'https://localhost:4318/v1/logs').to_raise(OpenSSL::SSL::SSLError.new('enigma wedged'))
       log_record_data = OpenTelemetry::TestHelpers.create_log_record_data
       exporter.stub(:backoff?, ->(**_) { false }) do
@@ -495,13 +495,13 @@ describe OpenTelemetry::Exporter::OTLP::Exporter do
       stub_post = stub_request(:post, 'http://localhost:4318/v1/logs').to_return(status: 200)
       processor = OpenTelemetry::SDK::Logs::Export::BatchLogRecordProcessor.new(exporter, max_queue_size: 1, max_export_batch_size: 1)
       OpenTelemetry.logger_provider.add_log_record_processor(processor)
-      OpenTelemetry.logger_provider.logger.emit
+      OpenTelemetry.logger_provider.logger.emit(body: 'test')
       OpenTelemetry.logger_provider.shutdown
       assert_requested(stub_post)
     end
 
     it 'compresses with gzip if enabled' do
-      exporter = OpenTelemetry::Exporter::OTLP::Exporter.new(compression: 'gzip')
+      exporter = OpenTelemetry::Exporter::OTLP::LogsExporter.new(compression: 'gzip')
       stub_post = stub_request(:post, 'http://localhost:4318/v1/logs').to_return do |request|
         Opentelemetry::Proto::Collector::Logs::V1::ExportLogsServiceRequest.decode(Zlib.gunzip(request.body))
         { status: 200 }
@@ -534,166 +534,154 @@ describe OpenTelemetry::Exporter::OTLP::Exporter do
 
     it 'translates all the things' do
       # CHECK ME!
-      # TODO: See issue #1507 to fix
-      skip 'Intermittently fails' if RUBY_ENGINE == 'truffleruby'
-
+      # make multiple logs
+      # send them to multiple loggers
+      # shut down the processor
+      # see what happens
       stub_request(:post, 'http://localhost:4318/v1/logs').to_return(status: 200)
       processor = OpenTelemetry::SDK::Logs::Export::BatchLogRecordProcessor.new(exporter)
       logger = OpenTelemetry.logger_provider.logger('logger', 'v0.0.1')
-      other_logger = OpenTelemetry.logger_provider.logger('other_logger')
+      # other_logger = OpenTelemetry.logger_provider.logger('other_logger')
 
       trace_id = OpenTelemetry::Trace.generate_trace_id
-      root_span_id = OpenTelemetry::Trace.generate_span_id
-      child_span_id = OpenTelemetry::Trace.generate_span_id
-      client_span_id = OpenTelemetry::Trace.generate_span_id
-      server_span_id = OpenTelemetry::Trace.generate_span_id
-      consumer_span_id = OpenTelemetry::Trace.generate_span_id
-      start_timestamp = Time.now
-      end_timestamp = start_timestamp + 6
+      span_id = OpenTelemetry::Trace.generate_span_id
+      trace_flags = OpenTelemetry::Trace::TraceFlags::DEFAULT
+      span_context = OpenTelemetry::Trace::SpanContext.new(trace_id: trace_id, span_id: span_id, trace_flags: trace_flags)
+      timestamp = Time.now
+      observed_timestamp = Time.now + 1
+      severity_text = 'DEBUG'
+      body = 'Test'
+      attributes = { 'b' => true }
+
 
       OpenTelemetry.logger_provider.add_log_record_processor(processor)
-      root = OpenTelemetry::TestHelpers.with_ids(trace_id, root_span_id) { logger.start_root_span('root', kind: :internal, start_timestamp: start_timestamp) }
-      root.status = OpenTelemetry::Trace::Status.ok
-      root.finish(end_timestamp: end_timestamp)
-      root_ctx = OpenTelemetry::Trace.context_with_span(root)
-      log_record = OpenTelemetry::TestHelpers.with_ids(trace_id, child_span_id) { logger.start_span('child', with_parent: root_ctx, kind: :producer, start_timestamp: start_timestamp + 1, links: [OpenTelemetry::Trace::Link.new(root.context, 'attr' => 4)]) }
-      span['b'] = true
-      span['f'] = 1.1
-      span['i'] = 2
-      span['s'] = 'val'
-      span['a'] = [3, 4]
-      span.status = OpenTelemetry::Trace::Status.error
-      child_ctx = OpenTelemetry::Trace.context_with_span(span)
-      client = OpenTelemetry::TestHelpers.with_ids(trace_id, client_span_id) { logger.start_span('client', with_parent: child_ctx, kind: :client, start_timestamp: start_timestamp + 2).finish(end_timestamp: end_timestamp) }
-      client_ctx = OpenTelemetry::Trace.context_with_span(client)
-      OpenTelemetry::TestHelpers.with_ids(trace_id, server_span_id) { other_logger.start_span('server', with_parent: client_ctx, kind: :server, start_timestamp: start_timestamp + 3).finish(end_timestamp: end_timestamp) }
-      span.add_event('event', attributes: { 'attr' => 42 }, timestamp: start_timestamp + 4)
-      OpenTelemetry::TestHelpers.with_ids(trace_id, consumer_span_id) { logger.start_span('consumer', with_parent: child_ctx, kind: :consumer, start_timestamp: start_timestamp + 5).finish(end_timestamp: end_timestamp) }
-      span.finish(end_timestamp: end_timestamp)
+      logger.emit(body: 'test', severity_number: 0, severity_text: 'DEBUG', timestamp: timestamp, span_context: span_context)
       OpenTelemetry.logger_provider.shutdown
 
       encoded_etsr = Opentelemetry::Proto::Collector::Logs::V1::ExportLogsServiceRequest.encode(
         Opentelemetry::Proto::Collector::Logs::V1::ExportLogsServiceRequest.new(
           resource_logs: [
-            Opentelemetry::Proto::Logs::V1::ResourceSpans.new(
+            Opentelemetry::Proto::Logs::V1::ResourceLogs.new(
               resource: Opentelemetry::Proto::Resource::V1::Resource.new(
                 attributes: [
                   Opentelemetry::Proto::Common::V1::KeyValue.new(key: 'telemetry.sdk.name', value: Opentelemetry::Proto::Common::V1::AnyValue.new(string_value: 'opentelemetry')),
                   Opentelemetry::Proto::Common::V1::KeyValue.new(key: 'telemetry.sdk.language', value: Opentelemetry::Proto::Common::V1::AnyValue.new(string_value: 'ruby')),
-                  Opentelemetry::Proto::Common::V1::KeyValue.new(key: 'telemetry.sdk.version', value: Opentelemetry::Proto::Common::V1::AnyValue.new(string_value: OpenTelemetry::SDK::VERSION))
+                  Opentelemetry::Proto::Common::V1::KeyValue.new(key: 'telemetry.sdk.version', value: Opentelemetry::Proto::Common::V1::AnyValue.new(string_value: OpenTelemetry::SDK::Logs::VERSION))
                 ]
               ),
-              scope_spans: [
-                Opentelemetry::Proto::Logs::V1::ScopeSpans.new(
+              scope_logs: [
+                Opentelemetry::Proto::Logs::V1::ScopeLogs.new(
                   scope: Opentelemetry::Proto::Common::V1::InstrumentationScope.new(
                     name: 'logger',
                     version: 'v0.0.1'
                   ),
-                  spans: [
+                  log_records: [
                     Opentelemetry::Proto::Logs::V1::LogRecord.new(
-                      trace_id: trace_id,
-                      span_id: root_span_id,
-                      parent_span_id: nil,
-                      name: 'root',
-                      kind: Opentelemetry::Proto::Logs::V1::LogRecord::SpanKind::SPAN_KIND_INTERNAL,
-                      start_time_unix_nano: (start_timestamp.to_r * 1_000_000_000).to_i,
-                      end_time_unix_nano: (end_timestamp.to_r * 1_000_000_000).to_i,
-                      status: Opentelemetry::Proto::Logs::V1::Status.new(
-                        code: Opentelemetry::Proto::Logs::V1::Status::StatusCode::STATUS_CODE_OK
-                      )
-                    ),
-                    Opentelemetry::Proto::Logs::V1::LogRecord.new(
-                      trace_id: trace_id,
-                      span_id: client_span_id,
-                      parent_span_id: child_span_id,
-                      name: 'client',
-                      kind: Opentelemetry::Proto::Logs::V1::LogRecord::SpanKind::SPAN_KIND_CLIENT,
-                      start_time_unix_nano: ((start_timestamp + 2).to_r * 1_000_000_000).to_i,
-                      end_time_unix_nano: (end_timestamp.to_r * 1_000_000_000).to_i,
-                      status: Opentelemetry::Proto::Logs::V1::Status.new(
-                        code: Opentelemetry::Proto::Logs::V1::Status::StatusCode::STATUS_CODE_UNSET
-                      )
-                    ),
-                    Opentelemetry::Proto::Logs::V1::LogRecord.new(
-                      trace_id: trace_id,
-                      span_id: consumer_span_id,
-                      parent_span_id: child_span_id,
-                      name: 'consumer',
-                      kind: Opentelemetry::Proto::Logs::V1::LogRecord::SpanKind::SPAN_KIND_CONSUMER,
-                      start_time_unix_nano: ((start_timestamp + 5).to_r * 1_000_000_000).to_i,
-                      end_time_unix_nano: (end_timestamp.to_r * 1_000_000_000).to_i,
-                      status: Opentelemetry::Proto::Logs::V1::Status.new(
-                        code: Opentelemetry::Proto::Logs::V1::Status::StatusCode::STATUS_CODE_UNSET
-                      )
-                    ),
-                    Opentelemetry::Proto::Logs::V1::LogRecord.new(
-                      trace_id: trace_id,
-                      span_id: child_span_id,
-                      parent_span_id: root_span_id,
-                      name: 'child',
-                      kind: Opentelemetry::Proto::Logs::V1::LogRecord::SpanKind::SPAN_KIND_PRODUCER,
-                      start_time_unix_nano: ((start_timestamp + 1).to_r * 1_000_000_000).to_i,
-                      end_time_unix_nano: (end_timestamp.to_r * 1_000_000_000).to_i,
+                      time_unix_nano: (timestamp.to_r * 1_000_000_000).to_i,
+                      observed_time_unix_nano: (observed_timestamp.to_r * 1_000_000_000).to_i,
+                      severity_number: Opentelemetry::Proto::Logs::V1::SeverityNumber::SEVERITY_NUMBER_DEBUG,
+                      severity_text: severity_text,
+                      body: Opentelemetry::Proto::Common::V1::AnyValue.new(string_value: body),
                       attributes: [
                         Opentelemetry::Proto::Common::V1::KeyValue.new(key: 'b', value: Opentelemetry::Proto::Common::V1::AnyValue.new(bool_value: true)),
-                        Opentelemetry::Proto::Common::V1::KeyValue.new(key: 'f', value: Opentelemetry::Proto::Common::V1::AnyValue.new(double_value: 1.1)),
-                        Opentelemetry::Proto::Common::V1::KeyValue.new(key: 'i', value: Opentelemetry::Proto::Common::V1::AnyValue.new(int_value: 2)),
-                        Opentelemetry::Proto::Common::V1::KeyValue.new(key: 's', value: Opentelemetry::Proto::Common::V1::AnyValue.new(string_value: 'val')),
-                        Opentelemetry::Proto::Common::V1::KeyValue.new(
-                          key: 'a',
-                          value: Opentelemetry::Proto::Common::V1::AnyValue.new(
-                            array_value: Opentelemetry::Proto::Common::V1::ArrayValue.new(
-                              values: [
-                                Opentelemetry::Proto::Common::V1::AnyValue.new(int_value: 3),
-                                Opentelemetry::Proto::Common::V1::AnyValue.new(int_value: 4)
-                              ]
-                            )
-                          )
-                        )
                       ],
-                      events: [
-                        Opentelemetry::Proto::Logs::V1::LogRecord::Event.new(
-                          time_unix_nano: ((start_timestamp + 4).to_r * 1_000_000_000).to_i,
-                          name: 'event',
-                          attributes: [
-                            Opentelemetry::Proto::Common::V1::KeyValue.new(key: 'attr', value: Opentelemetry::Proto::Common::V1::AnyValue.new(int_value: 42))
-                          ]
-                        )
-                      ],
-                      links: [
-                        Opentelemetry::Proto::Logs::V1::LogRecord::Link.new(
-                          trace_id: trace_id,
-                          span_id: root_span_id,
-                          attributes: [
-                            Opentelemetry::Proto::Common::V1::KeyValue.new(key: 'attr', value: Opentelemetry::Proto::Common::V1::AnyValue.new(int_value: 4))
-                          ]
-                        )
-                      ],
-                      status: Opentelemetry::Proto::Logs::V1::Status.new(
-                        code: Opentelemetry::Proto::Logs::V1::Status::StatusCode::STATUS_CODE_ERROR
-                      )
-                    )
+                      dropped_attributes_count: 0,
+                      flags: trace_flags.instance_variable_get(:@flags),
+                      trace_id: trace_id,
+                      span_id: span_id
+                    ),
+                    # Opentelemetry::Proto::Logs::V1::LogRecord.new(
+                    #   trace_id: trace_id,
+                    #   span_id: client_span_id,
+                    #   parent_span_id: child_span_id,
+                    #   name: 'client',
+                    #   kind: Opentelemetry::Proto::Logs::V1::LogRecord::SpanKind::SPAN_KIND_CLIENT,
+                    #   start_time_unix_nano: ((start_timestamp + 2).to_r * 1_000_000_000).to_i,
+                    #   end_time_unix_nano: (end_timestamp.to_r * 1_000_000_000).to_i,
+                    #   status: Opentelemetry::Proto::Logs::V1::Status.new(
+                    #     code: Opentelemetry::Proto::Logs::V1::Status::StatusCode::STATUS_CODE_UNSET
+                    #   )
+                    # ),
+                    # Opentelemetry::Proto::Logs::V1::LogRecord.new(
+                    #   trace_id: trace_id,
+                    #   span_id: consumer_span_id,
+                    #   parent_span_id: child_span_id,
+                    #   name: 'consumer',
+                    #   kind: Opentelemetry::Proto::Logs::V1::LogRecord::SpanKind::SPAN_KIND_CONSUMER,
+                    #   start_time_unix_nano: ((start_timestamp + 5).to_r * 1_000_000_000).to_i,
+                    #   end_time_unix_nano: (end_timestamp.to_r * 1_000_000_000).to_i,
+                    #   status: Opentelemetry::Proto::Logs::V1::Status.new(
+                    #     code: Opentelemetry::Proto::Logs::V1::Status::StatusCode::STATUS_CODE_UNSET
+                    #   )
+                    # ),
+                    # Opentelemetry::Proto::Logs::V1::LogRecord.new(
+                    #   trace_id: trace_id,
+                    #   span_id: child_span_id,
+                    #   parent_span_id: root_span_id,
+                    #   name: 'child',
+                    #   kind: Opentelemetry::Proto::Logs::V1::LogRecord::SpanKind::SPAN_KIND_PRODUCER,
+                    #   start_time_unix_nano: ((start_timestamp + 1).to_r * 1_000_000_000).to_i,
+                    #   end_time_unix_nano: (end_timestamp.to_r * 1_000_000_000).to_i,
+                    #   attributes: [
+                    #     Opentelemetry::Proto::Common::V1::KeyValue.new(key: 'b', value: Opentelemetry::Proto::Common::V1::AnyValue.new(bool_value: true)),
+                    #     Opentelemetry::Proto::Common::V1::KeyValue.new(key: 'f', value: Opentelemetry::Proto::Common::V1::AnyValue.new(double_value: 1.1)),
+                    #     Opentelemetry::Proto::Common::V1::KeyValue.new(key: 'i', value: Opentelemetry::Proto::Common::V1::AnyValue.new(int_value: 2)),
+                    #     Opentelemetry::Proto::Common::V1::KeyValue.new(key: 's', value: Opentelemetry::Proto::Common::V1::AnyValue.new(string_value: 'val')),
+                    #     Opentelemetry::Proto::Common::V1::KeyValue.new(
+                    #       key: 'a',
+                    #       value: Opentelemetry::Proto::Common::V1::AnyValue.new(
+                    #         array_value: Opentelemetry::Proto::Common::V1::ArrayValue.new(
+                    #           values: [
+                    #             Opentelemetry::Proto::Common::V1::AnyValue.new(int_value: 3),
+                    #             Opentelemetry::Proto::Common::V1::AnyValue.new(int_value: 4)
+                    #           ]
+                    #         )
+                    #       )
+                    #     )
+                    #   ],
+                    #   events: [
+                    #     Opentelemetry::Proto::Logs::V1::LogRecord::Event.new(
+                    #       time_unix_nano: ((start_timestamp + 4).to_r * 1_000_000_000).to_i,
+                    #       name: 'event',
+                    #       attributes: [
+                    #         Opentelemetry::Proto::Common::V1::KeyValue.new(key: 'attr', value: Opentelemetry::Proto::Common::V1::AnyValue.new(int_value: 42))
+                    #       ]
+                    #     )
+                    #   ],
+                    #   links: [
+                    #     Opentelemetry::Proto::Logs::V1::LogRecord::Link.new(
+                    #       trace_id: trace_id,
+                    #       span_id: root_span_id,
+                    #       attributes: [
+                    #         Opentelemetry::Proto::Common::V1::KeyValue.new(key: 'attr', value: Opentelemetry::Proto::Common::V1::AnyValue.new(int_value: 4))
+                    #       ]
+                    #     )
+                    #   ],
+                    #   status: Opentelemetry::Proto::Logs::V1::Status.new(
+                    #     code: Opentelemetry::Proto::Logs::V1::Status::StatusCode::STATUS_CODE_ERROR
+                    #   )
+                    # )
                   ]
                 ),
-                Opentelemetry::Proto::Logs::V1::ScopeSpans.new(
-                  scope: Opentelemetry::Proto::Common::V1::InstrumentationScope.new(
-                    name: 'other_logger'
-                  ),
-                  spans: [
-                    Opentelemetry::Proto::Logs::V1::LogRecord.new(
-                      trace_id: trace_id,
-                      span_id: server_span_id,
-                      parent_span_id: client_span_id,
-                      name: 'server',
-                      kind: Opentelemetry::Proto::Logs::V1::LogRecord::SpanKind::SPAN_KIND_SERVER,
-                      start_time_unix_nano: ((start_timestamp + 3).to_r * 1_000_000_000).to_i,
-                      end_time_unix_nano: (end_timestamp.to_r * 1_000_000_000).to_i,
-                      status: Opentelemetry::Proto::Logs::V1::Status.new(
-                        code: Opentelemetry::Proto::Logs::V1::Status::StatusCode::STATUS_CODE_UNSET
-                      )
-                    )
-                  ]
-                )
+                # Opentelemetry::Proto::Logs::V1::ScopeSpans.new(
+                #   scope: Opentelemetry::Proto::Common::V1::InstrumentationScope.new(
+                #     name: 'other_logger'
+                #   ),
+                #   spans: [
+                #     Opentelemetry::Proto::Logs::V1::LogRecord.new(
+                #       trace_id: trace_id,
+                #       span_id: server_span_id,
+                #       parent_span_id: client_span_id,
+                #       name: 'server',
+                #       kind: Opentelemetry::Proto::Logs::V1::LogRecord::SpanKind::SPAN_KIND_SERVER,
+                #       start_time_unix_nano: ((start_timestamp + 3).to_r * 1_000_000_000).to_i,
+                #       end_time_unix_nano: (end_timestamp.to_r * 1_000_000_000).to_i,
+                #       status: Opentelemetry::Proto::Logs::V1::Status.new(
+                #         code: Opentelemetry::Proto::Logs::V1::Status::StatusCode::STATUS_CODE_UNSET
+                #       )
+                #     )
+                #   ]
+                # )
               ]
             )
           ]
