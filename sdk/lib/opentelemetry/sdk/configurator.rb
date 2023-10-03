@@ -126,6 +126,13 @@ module OpenTelemetry
         @span_processors << span_processor
       end
 
+      # Add a log record processor to the export pipeline
+      #
+      # @param [#emit, #shutdown, #force_flush] log_record_processor A log_record_processor
+      #   that satisfies the duck type #emit, #shutdown, #force_flush. See
+      #   {SimpleLogRecordProcessor} for an example.
+      def add_log_record_processor(log_record_processor); end
+
       # @api private
       # The configure method is where we define the setup process. This allows
       # us to make certain guarantees about which systems and globals are setup
@@ -226,7 +233,7 @@ module OpenTelemetry
 
       def fetch_exporter(name, class_name)
         Trace::Export::BatchSpanProcessor.new(Kernel.const_get(class_name).new)
-      rescue NameError => e
+      rescue NameError
         OpenTelemetry.logger.warn "The #{name} exporter cannot be configured - please add opentelemetry-exporter-#{name} to your Gemfile, spans will not be exported"
         nil
       end
