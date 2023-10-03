@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 require 'opentelemetry/common'
+require 'opentelemetry/sdk'
 require 'opentelemetry/sdk/logs'
 require 'net/http'
 require 'csv'
@@ -49,7 +50,7 @@ module OpenTelemetry
 
         def initialize(endpoint: OpenTelemetry::Common::Utilities.config_opt('OTEL_EXPORTER_OTLP_LOGS_ENDPOINT', 'OTEL_EXPORTER_OTLP_ENDPOINT', default: 'http://localhost:4318/v1/logs'),
                        certificate_file: OpenTelemetry::Common::Utilities.config_opt('OTEL_EXPORTER_OTLP_LOGS_CERTIFICATE', 'OTEL_EXPORTER_OTLP_CERTIFICATE'),
-                       ssl_verify_mode: Exporter.ssl_verify_mode,
+                       ssl_verify_mode: LogsExporter.ssl_verify_mode,
                        headers: OpenTelemetry::Common::Utilities.config_opt('OTEL_EXPORTER_OTLP_LOGS_HEADERS', 'OTEL_EXPORTER_OTLP_HEADERS', default: {}),
                        compression: OpenTelemetry::Common::Utilities.config_opt('OTEL_EXPORTER_OTLP_LOGS_COMPRESSION', 'OTEL_EXPORTER_OTLP_COMPRESSION', default: 'gzip'),
                        timeout: OpenTelemetry::Common::Utilities.config_opt('OTEL_EXPORTER_OTLP_LOGS_TIMEOUT', 'OTEL_EXPORTER_OTLP_TIMEOUT', default: 10))
@@ -136,6 +137,7 @@ module OpenTelemetry
           else
             body = bytes
           end
+
           request.body = body
           request.add_field('Content-Type', 'application/x-protobuf')
           @headers.each { |key, value| request.add_field(key, value) }
@@ -285,7 +287,6 @@ module OpenTelemetry
             )
           )
         rescue StandardError => e
-          binding.irb
           OpenTelemetry.handle_error(exception: e, message: 'unexpected error in OTLP::Exporter#encode')
           nil
         end
@@ -294,24 +295,15 @@ module OpenTelemetry
           Opentelemetry::Proto::Logs::V1::LogRecord.new(
             time_unix_nano: log_record_data.unix_nano_timestamp,
             observed_time_unix_nano: log_record_data.unix_nano_observed_timestamp,
-            severity_number: log_record_data.severity_number, # maybe you need to use the proto severity number?
+            severity_number: as_otlp_severity_number(log_record_data.severity_number),
             severity_text: log_record_data.severity_text,
             body: as_otlp_any_value(log_record_data.body),
             attributes: log_record_data.attributes&.map { |k, v| as_otlp_key_value(k, v) },
-            dropped_attributes_count: log_record_data.attributes&.size.to_i, # TODO: set up
+            dropped_attributes_count: log_record_data.total_recorded_attributes - log_record_data.attributes&.size.to_i,
             flags: log_record_data.trace_flags.instance_variable_get(:@flags),
             trace_id: log_record_data.trace_id,
             span_id: log_record_data.span_id
           )
-        end
-
-        # CHANGE ME! # NO LOGS STATUS CODES IN API ATM
-        def as_otlp_status_code(code)
-          case code
-          when OpenTelemetry::Logs::Status::OK then Opentelemetry::Proto::Logs::V1::Status::StatusCode::STATUS_CODE_OK
-          when OpenTelemetry::Logs::Status::ERROR then Opentelemetry::Proto::Logs::V1::Status::StatusCode::STATUS_CODE_ERROR
-          else Opentelemetry::Proto::Logs::V1::Status::StatusCode::STATUS_CODE_UNSET
-          end
         end
 
         def as_otlp_key_value(key, value)
@@ -338,6 +330,20 @@ module OpenTelemetry
             result.array_value = Opentelemetry::Proto::Common::V1::ArrayValue.new(values: values)
           end
           result
+        end
+
+        # TODO: maybe don't translate the severity number, but translate the severity text into
+        # the number if the number is nil? Poss. change to allow for adding your own
+        # otel values?
+        def as_otlp_severity_number(severity_number)
+          case severity_number
+          when 0 then Opentelemetry::Proto::Logs::V1::SeverityNumber::SEVERITY_NUMBER_DEBUG
+          when 1 then Opentelemetry::Proto::Logs::V1::SeverityNumber::SEVERITY_NUMBER_INFO
+          when 2 then Opentelemetry::Proto::Logs::V1::SeverityNumber::SEVERITY_NUMBER_WARN
+          when 3 then Opentelemetry::Proto::Logs::V1::SeverityNumber::SEVERITY_NUMBER_ERROR
+          when 4 then Opentelemetry::Proto::Logs::V1::SeverityNumber::SEVERITY_NUMBER_FATAL
+          when 5 then Opentelemetry::Proto::Logs::V1::SeverityNumber::SEVERITY_NUMBER_UNSPECIFIED
+          end
         end
 
         def prepare_headers(config_headers)
