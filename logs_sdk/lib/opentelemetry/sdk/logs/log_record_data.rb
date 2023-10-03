@@ -20,13 +20,22 @@ module OpenTelemetry
                                  #   Array<String, Numeric, Boolean>}
                                  :resource,              # optional OpenTelemetry::SDK::Resources::Resource
                                  :instrumentation_scope, # OpenTelemetry::SDK::InstrumentationScope
-                                 :attributes) do          # optional Hash{String => String, Numeric, Boolean, Array<String, Numeric, Boolean>}
+                                 :attributes, # optional Hash{String => String, Numeric, Boolean, Array<String, Numeric, Boolean>}
+                                 :total_recorded_attributes) do # Integer
         def unix_nano_timestamp
-          timestamp.is_a?(Time) ? timestamp.nsec : timestamp
+          if timestamp.is_a?(Time)
+            (timestamp.to_r * 1_000_000_000).to_i
+          else
+            timestamp
+          end
         end
 
         def unix_nano_observed_timestamp
-          timestamp.is_a?(Time) ? timestamp.nsec : timestamp
+          if timestamp.is_a?(Time)
+            (timestamp.to_r * 1_000_000_000).to_i
+          else
+            timestamp
+          end
         end
       end
     end
