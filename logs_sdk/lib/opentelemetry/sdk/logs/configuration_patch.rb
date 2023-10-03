@@ -4,12 +4,18 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+require 'opentelemetry/sdk/configurator'
+
 module OpenTelemetry
   module SDK
     module Logs
       # The ConfiguratorPatch implements a hook to configure the logs
       # portion of the SDK.
       module ConfiguratorPatch
+        def add_log_record_processor(log_record_processor)
+          @log_record_processors << log_record_processor
+        end
+
         private
 
         def initialize
