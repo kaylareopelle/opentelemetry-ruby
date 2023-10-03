@@ -88,6 +88,29 @@ describe OpenTelemetry::SDK::Logs::LoggerProvider do
       assert_instance_of(OpenTelemetry::SDK::Logs::Logger, logger)
       assert_same(logger, logger2)
     end
+
+    describe 'when stopped' do
+      it 'logs a warning' do
+        logger_provider.instance_variable_set(:@stopped, true)
+
+        OpenTelemetry::TestHelpers.with_test_logger do |log_stream|
+          logger_provider.logger('')
+          assert_match(
+            /calling after shutdown/,
+            log_stream.string
+          )
+        end
+      end
+
+      it 'does not add a new logger to the registry' do
+        before_stopped_size = logger_provider.instance_variable_get(:@registry).keys.size
+        logger_provider.instance_variable_set(:@stopped, true)
+        logger_provider.logger
+        after_stopped_size = logger_provider.instance_variable_get(:@registry).keys.size
+
+        assert_equal(before_stopped_size, after_stopped_size)
+      end
+    end
   end
 
   describe '#shutdown' do
