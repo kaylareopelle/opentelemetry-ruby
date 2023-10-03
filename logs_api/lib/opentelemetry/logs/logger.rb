@@ -22,7 +22,7 @@ module OpenTelemetry
       #   time at the source.
       # @param observed_timestamp [optional Float, Time] Time in nanoseconds
       #   since Unix epoch when the event was observed by the collection system.
-      #   Intended default: Process.clock_gettime(Process::CLOCK_REALTIME)
+      #   Intended default: Process.clock_gettime(Process::CLOCK_REALTIME, :nanosecond)
       # @param context [optional Context] The Context to associate with the
       #   LogRecord. Intended default: OpenTelemetry::Context.current
       # @param severity_number [optional Integer] Numerical value of the
