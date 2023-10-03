@@ -43,7 +43,7 @@ module OpenTelemetry
         #   time at the source.
         # @param observed_timestamp [optional Float, Time] Time in nanoseconds
         #   since Unix epoch when the event was observed by the collection system.
-        #   Intended default: Process.clock_gettime(Process::CLOCK_REALTIME)
+        #   Intended default: Process.clock_gettime(Process::CLOCK_REALTIME, :nanosecond)
         # @param [optional OpenTelemetry::Trace::SpanContext] span_context The
         #   OpenTelemetry::Trace::SpanContext to associate with the
         #   {LogRecord}.
