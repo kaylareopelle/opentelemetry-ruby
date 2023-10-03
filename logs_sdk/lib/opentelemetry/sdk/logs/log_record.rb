@@ -29,7 +29,7 @@ module OpenTelemetry
         # @param [optional Float, Time] observed_timestamp Time when the event
         #   was observed by the collection system. If nil, will first attempt
         #   to set to `timestamp`. If `timestamp` is nil, will set to
-        #   `Process.clock_gettime(Process::CLOCK_REALTIME)`.
+        #   `Process.clock_gettime(Process::CLOCK_REALTIME, :nanosecond)`.
         # @param [optional OpenTelemetry::Trace::SpanContext] span_context The
         #   OpenTelemetry::Trace::SpanContext to associate with the
         #   {LogRecord}.
@@ -59,7 +59,7 @@ module OpenTelemetry
           logger: nil
         )
           @timestamp = timestamp
-          @observed_timestamp = observed_timestamp || timestamp || Process.clock_gettime(Process::CLOCK_REALTIME)
+          @observed_timestamp = observed_timestamp || timestamp || Process.clock_gettime(Process::CLOCK_REALTIME, :nanosecond)
           @span_context = span_context
           @severity_text = severity_text
           @severity_number = severity_number
@@ -68,6 +68,7 @@ module OpenTelemetry
           @instrumentation_scope = logger&.instrumentation_scope
           @log_record_limits = logger&.log_record_limits || LogRecordLimits::DEFAULT
           @attributes = attributes.nil? ? nil : Hash[attributes] # We need a mutable copy of attributes
+          @total_recorded_attributes = @attributes&.size || 0
           trim_attributes(@attributes)
         end
 
@@ -83,19 +84,26 @@ module OpenTelemetry
             @body,
             @resource,
             @instrumentation_scope,
-            @attributes
+            @attributes,
+            @total_recorded_attributes
           )
         end
 
         private
 
+        # Do we have sufficient logging for dropped attributes?
         def trim_attributes(attributes)
           return if attributes.nil?
 
+          attributes = validate_attribute_keys(attributes)
           excess = attributes.size - @log_record_limits.attribute_count_limit
           excess.times { attributes.shift } if excess.positive?
           truncate_attribute_values(attributes, @log_record_limits.attribute_length_limit)
           nil
+        end
+
+        def validate_attribute_keys(attributes)
+          attributes.delete_if { |k, _v| !k.is_a?(String) || k.empty? }
         end
 
         def truncate_attribute_values(attributes, attribute_length_limit)
