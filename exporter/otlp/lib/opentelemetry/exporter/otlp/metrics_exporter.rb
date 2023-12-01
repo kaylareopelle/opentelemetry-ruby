@@ -71,7 +71,7 @@ module OpenTelemetry
           export(collect)
         end
 
-        # metrics [Metric Object]
+        # metrics Array[MetricData]
         def export(metrics, timeout: nil)
           @mutex.synchronize do
             send_bytes(encode(metrics), timeout: timeout)
@@ -238,7 +238,7 @@ module OpenTelemetry
               description: metrics.description,
               unit: metrics.unit,
               histogram: Opentelemetry::Proto::Metrics::V1::Histogram.new(
-                data_points: metrics.data_points.map do |hdp|
+                data_points: metrics.data_points.map do |_, hdp|
                   histogram_data_point(hdp)
                 end
               )
