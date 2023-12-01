@@ -40,6 +40,8 @@ module OpenTelemetry
             case exporter.strip
             when 'none' then nil
             when 'console' then OpenTelemetry.meter_provider.add_metric_reader(Metrics::Export::ConsoleMetricPullExporter.new)
+            when 'otlp'
+              OpenTelemetry.meter_provider.add_metric_reader(OpenTelemetry::Exporter::OTLP::MetricsExporter.new)
             else
               OpenTelemetry.logger.warn "The #{exporter} exporter is unknown and cannot be configured, metrics will not be exported"
               nil
