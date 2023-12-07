@@ -107,6 +107,7 @@ module OpenTelemetry
             @http.write_timeout = remaining_timeout if WRITE_TIMEOUT_SUPPORTED
             @http.start unless @http.started?
             response = Util.measure_request_duration { @http.request(request) }
+
             case response
             when Net::HTTPOK
               response.body # Read and discard body
@@ -213,10 +214,9 @@ module OpenTelemetry
               name: metrics.name,
               description: metrics.description,
               unit: metrics.unit,
-              gauge: Opentelemetry::Proto::Metrics::V1::Gauage.new(
-                data_points: metrics.data_points.map do |ndp|
-                  number_data_point(ndp)
-                end
+              gauge: Opentelemetry::Proto::Metrics::V1::Gauge.new(
+                data_points: metrics.data_points.map { |ndp| number_data_point(ndp) },
+                aggregation_temporality: as_otlp_aggregation_temporality(metrics.aggregation_temporality)
               )
             )
 
@@ -226,9 +226,8 @@ module OpenTelemetry
               description: metrics.description,
               unit: metrics.unit,
               sum: Opentelemetry::Proto::Metrics::V1::Sum.new(
-                data_points: metrics.data_points.map do |ndp|
-                  number_data_point(ndp)
-                end
+                data_points: metrics.data_points.map { |ndp| number_data_point(ndp) },
+                aggregation_temporality: as_otlp_aggregation_temporality(metrics.aggregation_temporality)
               )
             )
 
@@ -238,9 +237,8 @@ module OpenTelemetry
               description: metrics.description,
               unit: metrics.unit,
               histogram: Opentelemetry::Proto::Metrics::V1::Histogram.new(
-                data_points: metrics.data_points.map do |_, hdp|
-                  histogram_data_point(hdp)
-                end
+                data_points: metrics.data_points.map { |_, hdp| histogram_data_point(hdp) },
+                aggregation_temporality: as_otlp_aggregation_temporality(metrics.aggregation_temporality)
               )
             )
           end
@@ -259,6 +257,14 @@ module OpenTelemetry
             min: hdp.min,
             max: hdp.max
           )
+        end
+
+        def as_otlp_aggregation_temporality(type)
+          case type
+          when :delta then Opentelemetry::Proto::Metrics::V1::AggregationTemporality::AGGREGATION_TEMPORALITY_DELTA
+          when :cumulative then Opentelemetry::Proto::Metrics::V1::AggregationTemporality::AGGREGATION_TEMPORALITY_CUMULATIVE
+          else Opentelemetry::Proto::Metrics::V1::AggregationTemporality::AGGREGATION_TEMPORALITY_UNSPECIFIED
+          end
         end
 
         def number_data_point(ndp)

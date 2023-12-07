@@ -14,6 +14,7 @@ module OpenTelemetry
         class MetricReader
           attr_reader :metric_store
 
+          # TODO: CONFIGURE TEMPORALITY HERE
           def initialize
             @metric_store = OpenTelemetry::SDK::Metrics::State::MetricStore.new
           end
