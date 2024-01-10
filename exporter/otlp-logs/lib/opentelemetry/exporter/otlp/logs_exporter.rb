@@ -80,6 +80,7 @@ module OpenTelemetry
         # @param [optional Numeric] timeout An optional timeout in seconds.
         # @return [Integer] the result of the export.
         def export(log_record_data, timeout: nil)
+          OpenTelemetry.logger.error('Logs Exporter tried to export, but it has already shut down') if @shutdown
           return FAILURE if @shutdown
 
           send_bytes(encode(log_record_data), timeout: timeout)
@@ -156,6 +157,7 @@ module OpenTelemetry
             @http.start unless @http.started?
             response = measure_request_duration { @http.request(request) }
 
+            OpenTelemetry.logger.error("LogsExporter#send_bytes response: #{response}")
             case response
             when Net::HTTPOK
               response.body # Read and discard body
