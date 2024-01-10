@@ -197,6 +197,7 @@ module OpenTelemetry
               OpenTelemetry.logger.debug("Successfully exported #{batch.size} log records")
             else
               OpenTelemetry.handle_error(exception: ExportError.new("Unable to export #{batch.size} log records"))
+              OpenTelemetry.logger.error("Result code: #{result_code}")
             end
           end
 
