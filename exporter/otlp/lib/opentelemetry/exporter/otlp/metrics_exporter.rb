@@ -79,6 +79,7 @@ module OpenTelemetry
         end
 
         def send_bytes(bytes, timeout:) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
+          OpenTelemetry.logger.error('MetricExporter#send_bytes failed because bytes was nil') if bytes.nil?
           return FAILURE if bytes.nil?
 
           request = Net::HTTP::Post.new(@path)
@@ -108,6 +109,7 @@ module OpenTelemetry
             @http.start unless @http.started?
             response = Util.measure_request_duration { @http.request(request) }
 
+            OpenTelemetry.logger.error("MetricsExporter#send_bytes response: #{response}")
             case response
             when Net::HTTPOK
               response.body # Read and discard body
