@@ -68,12 +68,14 @@ module OpenTelemetry
         #
         # return MetricData
         def pull
+          OpenTelemetry.logger.debug("MetricsExporter#pull reached")
           export(collect)
         end
 
         # metrics Array[MetricData]
         def export(metrics, timeout: nil)
           @mutex.synchronize do
+            OpenTelemetry.logger.debug('MetricsExporter#send_bytes reached')
             send_bytes(encode(metrics), timeout: timeout)
           end
         end
