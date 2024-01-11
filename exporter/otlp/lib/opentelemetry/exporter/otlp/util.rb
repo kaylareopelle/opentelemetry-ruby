@@ -79,10 +79,13 @@ module OpenTelemetry
         def self.measure_request_duration
           start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
           begin
+            OpenTelemetry.logger.debug('Measure request duration begin reached')
             yield
           rescue StandardError => e
+            OpenTelemetry.logger.debug('Measure request duration rescue reached')
             OpenTelemetry.handle_error(exception: e, message: 'Util.measure_request_duration error raised')
           ensure
+            OpenTelemetry.logger.debug('Measure request duration ensure reached')
             stop = Process.clock_gettime(Process::CLOCK_MONOTONIC)
             1000.0 * (stop - start)
           end
