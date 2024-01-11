@@ -100,7 +100,7 @@ module OpenTelemetry
           retry_count = 0
           timeout ||= @timeout
           start_time = OpenTelemetry::Common::Utilities.timeout_timestamp
-
+          OpenTelemetry.logger.debug('MetricsExporter#send_bytes reached Util.around_request')
           Util.around_request do
             remaining_timeout = OpenTelemetry::Common::Utilities.maybe_timeout(timeout, start_time)
             return FAILURE if remaining_timeout.zero?
@@ -109,6 +109,7 @@ module OpenTelemetry
             @http.read_timeout = remaining_timeout
             @http.write_timeout = remaining_timeout if WRITE_TIMEOUT_SUPPORTED
             @http.start unless @http.started?
+            OpenTelemetry.logger.debug('MetricsExporter#send_bytes inside Util.around_request')
             response = Util.measure_request_duration { @http.request(request) }
 
             OpenTelemetry.logger.debug("MetricsExporter#send_bytes response: #{response}")
@@ -173,6 +174,7 @@ module OpenTelemetry
         rescue StandardError => e
           OpenTelemetry.handle_error(exception: e, message: 'unexpected error on the outside of MetricsExporter#send_bytes')
         ensure
+          OpenTelemetry.logger.debug('MetricsExporter#send_bytes ensure block reached')
           # Reset timeouts to defaults for the next call.
           @http.open_timeout = @timeout
           @http.read_timeout = @timeout
