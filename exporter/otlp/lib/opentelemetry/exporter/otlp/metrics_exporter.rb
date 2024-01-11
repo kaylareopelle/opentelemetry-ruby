@@ -111,8 +111,8 @@ module OpenTelemetry
             @http.start unless @http.started?
             OpenTelemetry.logger.debug('MetricsExporter#send_bytes inside Util.around_request')
             response = Util.measure_request_duration { @http.request(request) }
-
-            OpenTelemetry.logger.debug("MetricsExporter#send_bytes response: #{response}")
+            OpenTelemetry.logger.debug('MetricsExporter#send_bytes after measure_request_duration')
+            OpenTelemetry.logger.debug("MetricsExporter#send_bytes response: #{response.class}")
             case response
             when Net::HTTPOK
               response.body # Read and discard body

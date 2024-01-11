@@ -80,6 +80,8 @@ module OpenTelemetry
           start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
           begin
             yield
+          rescue StandardError => e
+            OpenTelemetry.handle_error(exception: e, message: 'Util.measure_request_duration error raised')
           ensure
             stop = Process.clock_gettime(Process::CLOCK_MONOTONIC)
             1000.0 * (stop - start)
