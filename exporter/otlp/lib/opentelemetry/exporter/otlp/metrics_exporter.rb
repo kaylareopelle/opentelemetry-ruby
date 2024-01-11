@@ -111,7 +111,7 @@ module OpenTelemetry
             @http.start unless @http.started?
             response = Util.measure_request_duration { @http.request(request) }
 
-            OpenTelemetry.logger.error("MetricsExporter#send_bytes response: #{response}")
+            OpenTelemetry.logger.debug("MetricsExporter#send_bytes response: #{response}")
             case response
             when Net::HTTPOK
               response.body # Read and discard body
@@ -170,6 +170,8 @@ module OpenTelemetry
             OpenTelemetry.handle_error(exception: e, message: 'unexpected error in OTLP::MetricsExporter#send_bytes')
             return FAILURE
           end
+        rescue StandardError => e
+          OpenTelemetry.handle_error(exception: e, message: 'unexpected error on the outside of MetricsExporter#send_bytes')
         ensure
           # Reset timeouts to defaults for the next call.
           @http.open_timeout = @timeout
