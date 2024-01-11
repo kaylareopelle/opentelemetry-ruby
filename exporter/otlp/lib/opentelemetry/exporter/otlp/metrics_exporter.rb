@@ -180,6 +180,8 @@ module OpenTelemetry
         end
 
         def encode(metrics_data) # rubocop:disable Metrics/MethodLength, Metrics/CyclomaticComplexity
+          OpenTelemetry.logger.debug('MetricsExporter#encode reached')
+          OpenTelemetry.logger.debug("Metrics Data payload: #{metrics_data}")
           Opentelemetry::Proto::Collector::Metrics::V1::ExportMetricsServiceRequest.encode(
             Opentelemetry::Proto::Collector::Metrics::V1::ExportMetricsServiceRequest.new(
               resource_metrics: metrics_data
