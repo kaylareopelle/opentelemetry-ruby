@@ -427,7 +427,8 @@ describe OpenTelemetry::SDK::Logs::Export::BatchLogRecordProcessor do
 
     it 'reports export failures' do
       mock_logger = Minitest::Mock.new
-      mock_logger.expect(:error, nil, [/Unable to export/])
+      mock_logger.expect(:error, nil, [/.*Unable to export/])
+      mock_logger.expect(:error, nil, [/Result code: 1/])
       mock_logger.expect(:error, nil, [/unexpected error in .*\#export_batch/])
 
       OpenTelemetry.stub(:logger, mock_logger) do

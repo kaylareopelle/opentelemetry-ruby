@@ -16,7 +16,8 @@ module OpenTelemetry
           'OpenTelemetry::SDK::Logs::LoggerProvider#%s'
 
         private_constant :UNEXPECTED_ERROR_MESSAGE
-        attr_reader :resource, :log_record_processors, :log_record_limits
+
+        attr_reader :resource, :log_record_limits
 
         # Returns a new LoggerProvider instance.
         #
@@ -48,7 +49,7 @@ module OpenTelemetry
         # @param [optional String] version Instrumentation package version
         #
         # @return [OpenTelemetry::SDK::Logs::Logger]
-        def logger(name = nil, version = nil)
+        def logger(name: nil, version: nil)
           if @stopped
             OpenTelemetry.logger.warn('calling LoggerProvider#logger after shutdown, a noop logger will be returned')
             OpenTelemetry::Logs::LoggerProvider::NOOP_LOGGER
@@ -56,8 +57,9 @@ module OpenTelemetry
             version ||= ''
 
             if !name.is_a?(String) || name.empty?
-            OpenTelemetry.logger.warn('LoggerProvider#logger called with an ' \
-              "invalid name. Name provided: #{name.inspect}")
+              OpenTelemetry.logger.warn('LoggerProvider#logger called with an ' \
+                "invalid name. Name provided: #{name.inspect}")
+            end
 
             @registry_mutex.synchronize do
               @registry[Key.new(name, version)] ||= Logger.new(name, version, self)

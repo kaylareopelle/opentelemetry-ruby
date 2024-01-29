@@ -54,9 +54,10 @@ describe OpenTelemetry::SDK::Logs::LogRecord do
 
         it 'is equal to the current time' do
           # Since I can't get the current time when the test was run
-          # I'm going to assert it's a Float, which is the Process.clock_gettime
-          # return value class.
-          assert_instance_of(Float, log_record.observed_timestamp)
+          # I'm going to assert it's an Integer, which is the
+          # Process.clock_gettime return value class when the :nanosecond
+          # option is passed.
+          assert_instance_of(Integer, log_record.observed_timestamp)
         end
       end
     end
@@ -87,7 +88,10 @@ describe OpenTelemetry::SDK::Logs::LogRecord do
         assert_equal(args[:severity_number], log_record_data.severity_number)
         assert_equal(args[:body], log_record_data.body)
         assert_equal(args[:logger].resource, log_record_data.resource)
-        assert_equal(args[:logger].instrumentation_scope, log_record_data.instrumentation_scope)
+        assert_equal(
+          args[:logger].instance_variable_get(:@instrumentation_scope),
+          log_record_data.instrumentation_scope
+        )
         assert_equal(args[:attributes], log_record_data.attributes)
       end
 
@@ -115,7 +119,7 @@ describe OpenTelemetry::SDK::Logs::LogRecord do
 
       describe 'instrumentation_scope' do
         it 'is set to the instrumentation_scope of the logger given on initialization' do
-          assert_equal(logger.instrumentation_scope, log_record.instrumentation_scope)
+          assert_equal(logger.instance_variable_get(:@instrumentation_scope), log_record.instance_variable_get(:@instrumentation_scope))
         end
       end
 

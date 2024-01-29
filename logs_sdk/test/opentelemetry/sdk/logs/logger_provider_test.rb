@@ -95,9 +95,9 @@ describe OpenTelemetry::SDK::Logs::LoggerProvider do
         logger_provider.instance_variable_set(:@stopped, true)
 
         OpenTelemetry::TestHelpers.with_test_logger do |log_stream|
-          logger_provider.logger('')
+          logger_provider.logger
           assert_match(
-            /calling after shutdown/,
+            /calling .* after shutdown/,
             log_stream.string
           )
         end

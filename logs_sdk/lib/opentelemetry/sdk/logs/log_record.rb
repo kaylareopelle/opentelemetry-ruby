@@ -65,7 +65,7 @@ module OpenTelemetry
           @severity_number = severity_number
           @body = body
           @resource = logger&.resource
-          @instrumentation_scope = logger&.instrumentation_scope
+          @instrumentation_scope = logger.instance_variable_get(:@instrumentation_scope)
           @log_record_limits = logger&.log_record_limits || LogRecordLimits::DEFAULT
           @attributes = attributes.nil? ? nil : Hash[attributes] # We need a mutable copy of attributes
           @total_recorded_attributes = @attributes&.size || 0

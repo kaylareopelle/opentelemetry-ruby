@@ -8,6 +8,8 @@ module OpenTelemetry
     module Logs
       # The Export module contains result codes for exporters
       module Export
+        ExportError = Class.new(OpenTelemetry::Error)
+
         # The operation finished successfully.
         SUCCESS = 0
 

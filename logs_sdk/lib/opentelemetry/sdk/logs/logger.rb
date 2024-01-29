@@ -29,11 +29,11 @@ module OpenTelemetry
         end
 
         def resource
-          logger_provider.resource
+          @logger_provider.resource
         end
 
         def log_record_limits
-          logger_provider.log_record_limits
+          @logger_provider.log_record_limits
         end
 
         # Emit a {LogRecord} to the processing pipeline.
@@ -77,7 +77,7 @@ module OpenTelemetry
                                      attributes: attributes,
                                      logger: self)
 
-          logger_provider.log_record_processors.each do |processor|
+          @logger_provider.instance_variable_get(:@log_record_processors).each do |processor|
             processor.emit(log_record, span_context)
           end
         end

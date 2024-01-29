@@ -7,8 +7,10 @@
 module OpenTelemetry
   module SDK
     module Logs
-      # TODO: Implement diffs b/w spec for logs & traces:
-      # Logs MUST: "decorate built-in processors for advanced scenarios such as enriching with attributes."
+      # LogRecordProcessor describes a duck type and provides a synchronous no-op hook for when a
+      # {LogRecord} is emitted. It is not required to subclass this
+      # class to provide an implementation of LogRecordProcessor, provided the interface is
+      # satisfied.
       class LogRecordProcessor
         # Called when a {LogRecord} is emitted. Subsequent calls are not
         # permitted after shutdown is called.
