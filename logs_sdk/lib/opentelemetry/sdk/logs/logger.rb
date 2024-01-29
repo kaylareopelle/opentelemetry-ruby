@@ -38,10 +38,10 @@ module OpenTelemetry
 
         # Emit a {LogRecord} to the processing pipeline.
         #
-        # @param timestamp [optional Float, Time] Time in nanoseconds since Unix
+        # @param timestamp [optional Integer, Time] Time in nanoseconds since Unix
         #   epoch when the event occurred measured by the origin clock, i.e. the
         #   time at the source.
-        # @param observed_timestamp [optional Float, Time] Time in nanoseconds
+        # @param observed_timestamp [optional Integer, Time] Time in nanoseconds
         #   since Unix epoch when the event was observed by the collection system.
         #   Intended default: Process.clock_gettime(Process::CLOCK_REALTIME, :nanosecond)
         # @param [optional OpenTelemetry::Trace::SpanContext] span_context The
