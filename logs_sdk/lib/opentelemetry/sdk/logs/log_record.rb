@@ -36,7 +36,7 @@ module OpenTelemetry
         # @param [optional String] severity_text The log severity, also known as
         #   log level.
         # @param [optional Integer] severity_number The numerical value of the
-        #   log severity. See OpenTelemetry::Logs::SeverityNumber.
+        #   log severity.
         # @param [optional String, Numeric, Boolean, Array<String, Numeric,
         #   Boolean>, Hash{String => String, Numeric, Boolean, Array<String,
         #   Numeric, Boolean>}] body The body of the {LogRecord}.
