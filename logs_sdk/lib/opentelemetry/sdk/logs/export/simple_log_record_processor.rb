@@ -42,12 +42,12 @@ module OpenTelemetry
           #
           # @param [LogRecord] log_record The emitted {LogRecord}
           # @param [Context] _context The current {Context}
-          def emit(log_record, _context)
+          def on_emit(log_record, _context)
             return if @stopped
 
             @log_record_exporter&.export([log_record.to_log_record_data])
           rescue => e # rubocop:disable Style/RescueStandardError
-            OpenTelemetry.handle_error(exception: e, message: 'Unexpected error in Logger#emit')
+            OpenTelemetry.handle_error(exception: e, message: 'Unexpected error in Logger#on_emit')
           end
 
           # Export all log records to the configured `Exporter` that have not

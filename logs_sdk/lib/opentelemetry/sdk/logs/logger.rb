@@ -63,7 +63,7 @@ module OpenTelemetry
         #   event.
         #
         # @api public
-        def emit(timestamp: nil,
+        def on_emit(timestamp: nil,
                  observed_timestamp: nil,
                  span_context: nil, # or should this just be context? like in the API?
                  severity_number: nil,
@@ -78,9 +78,9 @@ module OpenTelemetry
                                      body: body,
                                      attributes: attributes,
                                      logger: self)
-
-          logger_provider.log_record_processors.each do |processor|
-            processor.emit(log_record, span_context)
+          # TODO: Should I be using this if it's not an exposed value?
+          logger_provider.instance_variable_get(:@log_record_processors).each do |processor|
+            processor.on_emit(log_record, span_context)
           end
         end
       end

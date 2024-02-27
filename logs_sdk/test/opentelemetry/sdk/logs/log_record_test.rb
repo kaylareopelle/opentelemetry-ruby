@@ -54,9 +54,10 @@ describe OpenTelemetry::SDK::Logs::LogRecord do
 
         it 'is equal to the current time' do
           # Since I can't get the current time when the test was run
-          # I'm going to assert it's a Float, which is the Process.clock_gettime
-          # return value class.
-          assert_instance_of(Float, log_record.observed_timestamp)
+          # I'm going to assert it's an Integer, which is the
+          # Process.clock_gettime return value class when passed the
+          # :nanosecond option
+          assert_instance_of(Integer, log_record.observed_timestamp)
         end
       end
     end

@@ -12,7 +12,12 @@ module OpenTelemetry
         Key = Struct.new(:name, :version)
         private_constant(:Key)
 
-        attr_reader :resource, :log_record_processors, :log_record_limits
+        attr_reader :resource, :log_record_limits
+
+        UNEXPECTED_ERROR_MESSAGE = 'unexpected error in ' \
+          'OpenTelemetry::SDK::Logs::LoggerProvider#%s'
+
+        private_constant :UNEXPECTED_ERROR_MESSAGE
 
         # Returns a new LoggerProvider instance.
         #
@@ -40,21 +45,20 @@ module OpenTelemetry
 
         # Creates an {OpenTelemetry::SDK::Logs::Logger} instance.
         #
-        # @param [optional String] name Instrumentation package name
+        # @param [String] name Instrumentation package name
         # @param [optional String] version Instrumentation package version
         #
         # @return [OpenTelemetry::SDK::Logs::Logger]
-        def logger(name = nil, version = nil)
+        def logger(name:, version: nil)
           if @stopped
             OpenTelemetry.logger.warn('calling LoggerProvider#logger after shutdown, a noop logger will be returned')
             OpenTelemetry::Logs::LoggerProvider::NOOP_LOGGER
           else
-            name ||= ''
             version ||= ''
 
-            if name.empty?
-              OpenTelemetry.logger.warn('LoggerProvider#logger called without '\
-                'providing a logger name.')
+            if !name.is_a?(String) || name.empty?
+              OpenTelemetry.logger.warn('LoggerProvider#logger called with an ' \
+                "invalid name. Name provided: #{name.inspect}")
             end
 
             @registry_mutex.synchronize do
@@ -70,7 +74,12 @@ module OpenTelemetry
         #   {LogRecordProcessor} to add to this LoggerProvider.
         def add_log_record_processor(log_record_processor)
           @mutex.synchronize do
-            @log_record_processors = log_record_processors.dup.push(log_record_processor)
+            if @stopped
+              OpenTelemetry.logger.warn('calling LoggerProvider#' \
+                'add_log_record_processor after shutdown.')
+              return
+            end
+            @log_record_processors = @log_record_processors.dup.push(log_record_processor)
           end
         end
 
@@ -90,19 +99,19 @@ module OpenTelemetry
           @mutex.synchronize do
             if @stopped
               OpenTelemetry.logger.warn('LoggerProvider#shutdown called multiple times.')
-              return OpenTelemetry::SDK::Logs::Export::FAILURE
+              return Export::FAILURE
             end
 
             start_time = OpenTelemetry::Common::Utilities.timeout_timestamp
-            results = log_record_processors.map do |processor|
+            results = @log_record_processors.map do |processor|
               remaining_timeout = OpenTelemetry::Common::Utilities.maybe_timeout(timeout, start_time)
-              break [OpenTelemetry::SDK::Logs::Export::TIMEOUT] if remaining_timeout&.zero?
+              break [Export::TIMEOUT] if remaining_timeout&.zero?
 
               processor.shutdown(timeout: remaining_timeout)
             end
 
             @stopped = true
-            results.max || OpenTelemetry::SDK::Logs::Export::SUCCESS
+            results.max || Export::SUCCESS
           end
         end
 
@@ -122,7 +131,7 @@ module OpenTelemetry
             return Export::SUCCESS if @stopped
 
             start_time = OpenTelemetry::Common::Utilities.timeout_timestamp
-            results = log_record_processors.map do |processor|
+            results = @log_record_processors.map do |processor|
               remaining_timeout = OpenTelemetry::Common::Utilities.maybe_timeout(timeout, start_time)
               return Export::TIMEOUT if remaining_timeout&.zero?
 
@@ -131,9 +140,6 @@ module OpenTelemetry
 
             results.max || Export::SUCCESS
           end
-        rescue StandardError => e
-          OpenTelemetry.handle_error(exception: e, message: 'unexpected error in OpenTelemetry::SDK::Logs::LoggerProvider#force_flush')
-          Export::FAILURE
         end
       end
     end

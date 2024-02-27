@@ -20,7 +20,7 @@ describe OpenTelemetry::SDK::Logs::Export::SimpleLogRecordProcessor do
     end
   end
 
-  describe '#emit' do
+  describe '#on_emit' do
     it 'exports the log records' do
       mock_exporter = Minitest::Mock.new
       processor.instance_variable_set(:@log_record_exporter, mock_exporter)
@@ -29,7 +29,7 @@ describe OpenTelemetry::SDK::Logs::Export::SimpleLogRecordProcessor do
       log_record.stub(:to_log_record_data, mock_log_record_data) do
         OpenTelemetry::Common::Utilities.stub(:valid_exporter?, true) do
           mock_exporter.expect(:export, OpenTelemetry::SDK::Logs::Export::SUCCESS, [[mock_log_record_data]])
-          processor.emit(log_record, mock_context)
+          processor.on_emit(log_record, mock_context)
           mock_exporter.verify
         end
       end
@@ -39,20 +39,20 @@ describe OpenTelemetry::SDK::Logs::Export::SimpleLogRecordProcessor do
       processor.instance_variable_set(:@stopped, true)
       # raise if export is invoked
       exporter.stub(:export, ->(_) { raise 'whoops!' }) do
-        processor.emit(log_record, mock_context)
+        processor.on_emit(log_record, mock_context)
       end
     end
 
     it 'does not export if log_record is nil' do
       # raise if export is invoked
       exporter.stub(:export, ->(_) { raise 'whoops!' }) do
-        processor.emit(nil, mock_context)
+        processor.on_emit(nil, mock_context)
       end
     end
 
     it 'does not raise if exporter is nil' do
       processor.instance_variable_set(:@log_record_exporter, nil)
-      processor.emit(log_record, mock_context)
+      processor.on_emit(log_record, mock_context)
     end
 
     it 'catches and logs exporter errors' do
@@ -62,7 +62,7 @@ describe OpenTelemetry::SDK::Logs::Export::SimpleLogRecordProcessor do
       # raise if exporter's emit call is invoked
       OpenTelemetry.stub(:logger, logger_mock) do
         exporter.stub(:export, ->(_) { raise error_message }) do
-          processor.emit(log_record, mock_context)
+          processor.on_emit(log_record, mock_context)
         end
       end
 

@@ -7,15 +7,16 @@
 module OpenTelemetry
   module SDK
     module Logs
-      # TODO: Implement diffs b/w spec for logs & traces:
-      # Logs MUST: "decorate built-in processors for advanced scenarios such as enriching with attributes."
+      # LogRecordProcessor describes a duck type and provides a synchronous no-op hook for when a
+      # {LogRecord} is emitted. It is not required to subclass this
+      # class to provide an implementation of LogRecordProcessor, provided the interface is
+      # satisfied.
       class LogRecordProcessor
         # Called when a {LogRecord} is emitted. Subsequent calls are not
         # permitted after shutdown is called.
-        # @param [LogRecord] log_record The emitted {ReadWriteLogRecord}
-        # @param [Context] context The resolved Context
-        # TODO: Context or SpanContext here? What's the difference?
-        def emit(log_record, context); end
+        # @param [LogRecord] log_record The emitted {LogRecord}
+        # @param [Context] context The {Context}
+        def on_emit(log_record, context); end
 
         # Export all log records to the configured `Exporter` that have not yet
         # been exported.

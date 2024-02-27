@@ -32,58 +32,70 @@ describe OpenTelemetry::SDK::Logs::LoggerProvider do
 
   describe '#add_log_record_processor' do
     it "adds the processor to the logger provider's processors" do
-      assert_equal(0, logger_provider.log_record_processors.length)
+      assert_equal(0, logger_provider.instance_variable_get(:@log_record_processors).length)
 
       logger_provider.add_log_record_processor(mock_log_record_processor)
-      assert_equal(1, logger_provider.log_record_processors.length)
+      assert_equal(1, logger_provider.instance_variable_get(:@log_record_processors).length)
+    end
+
+    describe 'when stopped' do
+      before { logger_provider.instance_variable_set(:@stopped, true) }
+
+      it 'does not add the processor' do
+        assert_equal(0, logger_provider.instance_variable_get(:@log_record_processors).length)
+
+        logger_provider.add_log_record_processor(mock_log_record_processor)
+        assert_equal(0, logger_provider.instance_variable_get(:@log_record_processors).length)
+      end
+
+      it 'logs a warning' do
+        OpenTelemetry::TestHelpers.with_test_logger do |log_stream|
+          logger_provider.add_log_record_processor(mock_log_record_processor)
+          assert_match(/calling LoggerProvider#add_log_record_processor after shutdown/,
+            log_stream.string)
+        end
+      end
     end
   end
 
   describe '#logger' do
+    let(:error_text) { /LoggerProvider#logger called with an invalid name/ }
+
     it 'logs a warning if name is nil' do
       OpenTelemetry::TestHelpers.with_test_logger do |log_stream|
-        logger_provider.logger(nil)
-        assert_match(
-          /LoggerProvider#logger called without providing a logger name./,
-          log_stream.string
-        )
+        logger_provider.logger(name: nil)
+        assert_match(error_text, log_stream.string)
       end
     end
 
     it 'logs a warning if name is an empty string' do
       OpenTelemetry::TestHelpers.with_test_logger do |log_stream|
-        logger_provider.logger('')
-        assert_match(
-          /LoggerProvider#logger called without providing a logger name./,
-          log_stream.string
-        )
+        logger_provider.logger(name: '')
+        assert_match(error_text, log_stream.string)
       end
     end
 
-    it 'sets name to an empty string if nil' do
-      logger = logger_provider.logger(nil)
-      assert_equal(logger.instrumentation_scope.name, '')
-    end
-
     it 'sets version to an empty string if nil' do
-      logger = logger_provider.logger('name', nil)
-      assert_equal(logger.instrumentation_scope.version, '')
+      # :version is nil by default, but explicitly setting it here
+      # to make the test easier to read
+      logger = logger_provider.logger(name: 'name', version: nil)
+      assert_equal(logger.instance_variable_get(:@instrumentation_scope).version, '')
     end
 
     it 'creates a new logger with the passed-in name and version' do
       name = 'name'
       version = 'version'
-      logger = logger_provider.logger(name, version)
-      assert_equal(logger.instrumentation_scope.name, name)
-      assert_equal(logger.instrumentation_scope.version, version)
+      logger = logger_provider.logger(name: name, version: version)
+      assert_equal(name, logger.instance_variable_get(:@instrumentation_scope).name)
+      assert_equal(version, logger.instance_variable_get(:@instrumentation_scope).version)
     end
 
     # On the first call, create a logger with an empty string for name and
     # version and add to the registry. The second call returns that logger
     # from the registry instead of creating a new instance.
     it 'reuses the same logger if called twice when name and version are nil' do
-      logger = logger_provider.logger
-      logger2 = logger_provider.logger
+      logger = logger_provider.logger(name: nil, version: nil)
+      logger2 = logger_provider.logger(name: nil, version: nil)
 
       assert_instance_of(OpenTelemetry::SDK::Logs::Logger, logger)
       assert_same(logger, logger2)
@@ -94,9 +106,9 @@ describe OpenTelemetry::SDK::Logs::LoggerProvider do
         logger_provider.instance_variable_set(:@stopped, true)
 
         OpenTelemetry::TestHelpers.with_test_logger do |log_stream|
-          logger_provider.logger('')
+          logger_provider.logger(name: '')
           assert_match(
-            /calling after shutdown/,
+            /calling LoggerProvider#logger after shutdown/,
             log_stream.string
           )
         end
@@ -105,7 +117,7 @@ describe OpenTelemetry::SDK::Logs::LoggerProvider do
       it 'does not add a new logger to the registry' do
         before_stopped_size = logger_provider.instance_variable_get(:@registry).keys.size
         logger_provider.instance_variable_set(:@stopped, true)
-        logger_provider.logger
+        logger_provider.logger(name: 'new_logger')
         after_stopped_size = logger_provider.instance_variable_get(:@registry).keys.size
 
         assert_equal(before_stopped_size, after_stopped_size)
@@ -195,12 +207,6 @@ describe OpenTelemetry::SDK::Logs::LoggerProvider do
       OpenTelemetry::Common::Utilities.stub :maybe_timeout, 0 do
         logger_provider.add_log_record_processor(mock_log_record_processor)
         assert_equal(OpenTelemetry::SDK::Logs::Export::TIMEOUT, logger_provider.force_flush)
-      end
-    end
-
-    it 'returns a failure code when an error is raised' do
-      OpenTelemetry::Common::Utilities.stub :timeout_timestamp, -> { raise StandardError.new, 'fail' } do
-        assert_equal(OpenTelemetry::SDK::Logs::Export::FAILURE, logger_provider.force_flush)
       end
     end
   end

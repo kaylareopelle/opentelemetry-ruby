@@ -20,7 +20,7 @@ module OpenTelemetry
         #
         #     def test_emitted_log_records
         #       log_record = OpenTelemetry::SDK::Logs::LogRecord.new(body: 'log')
-        #       @logger_provider.logger.emit(log_record, context)
+        #       @logger_provider.logger.on_emit(log_record, context)
         #
         #       log_records = @exporter.emitted_log_records
 

@@ -178,9 +178,9 @@ describe OpenTelemetry::SDK::Logs::Export::BatchLogRecordProcessor do
     end
   end
 
-  describe '#emit' do
+  describe '#on_emit' do
     it 'adds the log record to the batch' do
-      processor.emit(log_record, mock_context)
+      processor.on_emit(log_record, mock_context)
 
       assert_includes(processor.instance_variable_get(:@log_records), log_record)
     end
@@ -191,8 +191,8 @@ describe OpenTelemetry::SDK::Logs::Export::BatchLogRecordProcessor do
       older_log_record = TestLogRecord.new
       newer_log_record = TestLogRecord.new
 
-      processor.emit(older_log_record, mock_context)
-      processor.emit(newer_log_record, mock_context)
+      processor.on_emit(older_log_record, mock_context)
+      processor.on_emit(newer_log_record, mock_context)
 
       records = processor.instance_variable_get(:@log_records)
       assert_includes(records, newer_log_record)
@@ -208,8 +208,8 @@ describe OpenTelemetry::SDK::Logs::Export::BatchLogRecordProcessor do
 
         log_record2 = TestLogRecord.new
 
-        processor.emit(log_record, mock_context)
-        processor.emit(log_record2, mock_context)
+        processor.on_emit(log_record, mock_context)
+        processor.on_emit(log_record2, mock_context)
       end
 
       mock_otel_logger.verify
@@ -217,14 +217,14 @@ describe OpenTelemetry::SDK::Logs::Export::BatchLogRecordProcessor do
 
     it 'does not emit a log record if stopped' do
       processor.instance_variable_set(:@stopped, true)
-      processor.emit(log_record, mock_context)
+      processor.on_emit(log_record, mock_context)
       assert_empty(processor.instance_variable_get(:@log_records))
     end
   end
 
   describe '#force_flush' do
     it 'reenqueues excess log_records on timeout' do
-      processor.emit(log_record, mock_context)
+      processor.on_emit(log_record, mock_context)
       result = processor.force_flush(timeout: 0)
 
       _(result).must_equal(TIMEOUT)
@@ -240,7 +240,7 @@ describe OpenTelemetry::SDK::Logs::Export::BatchLogRecordProcessor do
       processor.instance_variable_set(:@exporter, mock_exporter)
       log_record_data_mock = Minitest::Mock.new
       log_record.stub(:to_log_record_data, log_record_data_mock) do
-        processor.emit(log_record, mock_context)
+        processor.on_emit(log_record, mock_context)
         mock_exporter.expect(:export, 0, [[log_record_data_mock]], timeout: nil)
         mock_exporter.expect(:force_flush, nil, timeout: nil)
         processor.force_flush
@@ -250,7 +250,7 @@ describe OpenTelemetry::SDK::Logs::Export::BatchLogRecordProcessor do
 
     it 'returns failure code if export_batch fails' do
       processor.stub(:export_batch, OpenTelemetry::SDK::Logs::Export::FAILURE) do
-        processor.emit(log_record, mock_context)
+        processor.on_emit(log_record, mock_context)
         assert_equal(OpenTelemetry::SDK::Logs::Export::FAILURE, processor.force_flush)
       end
     end
@@ -273,7 +273,7 @@ describe OpenTelemetry::SDK::Logs::Export::BatchLogRecordProcessor do
   describe '#shutdown' do
     it 'does not allow subsequent calls to emit after shutdown' do
       processor.shutdown
-      processor.emit(log_record, mock_context)
+      processor.on_emit(log_record, mock_context)
       assert_empty(processor.instance_variable_get(:@log_records))
     end
 
@@ -292,7 +292,7 @@ describe OpenTelemetry::SDK::Logs::Export::BatchLogRecordProcessor do
     end
 
     it 'respects the timeout' do
-      processor.emit(TestLogRecord.new, mock_context)
+      processor.on_emit(TestLogRecord.new, mock_context)
       processor.shutdown(timeout: 0)
 
       _(exporter.failed_batches.size).must_equal(0)
@@ -315,7 +315,7 @@ describe OpenTelemetry::SDK::Logs::Export::BatchLogRecordProcessor do
       end
 
       processor = BatchLogRecordProcessor.new(test_exporter)
-      processor.emit(log_record, mock_context)
+      processor.on_emit(log_record, mock_context)
       result = processor.shutdown(timeout: 0)
 
       _(result).must_equal(SUCCESS)
@@ -330,7 +330,7 @@ describe OpenTelemetry::SDK::Logs::Export::BatchLogRecordProcessor do
       end
 
       processor = BatchLogRecordProcessor.new(test_exporter)
-      processor.emit(TestLogRecord.new, mock_context)
+      processor.on_emit(TestLogRecord.new, mock_context)
       result = processor.shutdown(timeout: 0)
 
       _(result).must_equal(FAILURE)
@@ -345,7 +345,7 @@ describe OpenTelemetry::SDK::Logs::Export::BatchLogRecordProcessor do
       end
 
       processor = BatchLogRecordProcessor.new(test_exporter)
-      processor.emit(TestLogRecord.new, mock_context)
+      processor.on_emit(TestLogRecord.new, mock_context)
       result = processor.shutdown(timeout: 0)
 
       _(result).must_equal(TIMEOUT)
@@ -358,7 +358,7 @@ describe OpenTelemetry::SDK::Logs::Export::BatchLogRecordProcessor do
     end
 
     it 'should flush everything on shutdown' do
-      processor.emit(log_record, mock_context)
+      processor.on_emit(log_record, mock_context)
       processor.shutdown
 
       _(exporter.batches).must_equal [[log_record]]
@@ -370,7 +370,7 @@ describe OpenTelemetry::SDK::Logs::Export::BatchLogRecordProcessor do
       processor = BatchLogRecordProcessor.new(exporter, max_queue_size: 6, max_export_batch_size: 3)
 
       log_records = [TestLogRecord.new, TestLogRecord.new, TestLogRecord.new, TestLogRecord.new]
-      log_records.each { |log_record| processor.emit(log_record, mock_context) }
+      log_records.each { |log_record| processor.on_emit(log_record, mock_context) }
       processor.shutdown
 
       _(exporter.batches[0].size).must_equal(3)
@@ -385,7 +385,7 @@ describe OpenTelemetry::SDK::Logs::Export::BatchLogRecordProcessor do
                                               max_queue_size: 6,
                                               max_export_batch_size: 3)
       log_records = [TestLogRecord.new, TestLogRecord.new, TestLogRecord.new, TestLogRecord.new]
-      log_records.each { |log_record| processor.emit(log_record, mock_context) }
+      log_records.each { |log_record| processor.on_emit(log_record, mock_context) }
 
       # Ensure that our work thread has time to loop
       sleep(1)
@@ -405,7 +405,7 @@ describe OpenTelemetry::SDK::Logs::Export::BatchLogRecordProcessor do
         Thread.new do
           x = i * 10
           10.times do |j|
-            processor.emit(TestLogRecord.new(x + j), mock_context)
+            processor.on_emit(TestLogRecord.new(x + j), mock_context)
           end
           sleep(rand(0.01))
         end
@@ -428,11 +428,12 @@ describe OpenTelemetry::SDK::Logs::Export::BatchLogRecordProcessor do
     it 'reports export failures' do
       mock_logger = Minitest::Mock.new
       mock_logger.expect(:error, nil, [/Unable to export/])
+      mock_logger.expect(:error, nil, [/Result code: 1/])
       mock_logger.expect(:error, nil, [/unexpected error in .*\#export_batch/])
 
       OpenTelemetry.stub(:logger, mock_logger) do
         log_records = [TestLogRecord.new, TestLogRecord.new, TestLogRecord.new, TestLogRecord.new]
-        log_records.each { |log_record| processor.emit(log_record, mock_context) }
+        log_records.each { |log_record| processor.on_emit(log_record, mock_context) }
         processor.shutdown
       end
 
@@ -452,7 +453,7 @@ describe OpenTelemetry::SDK::Logs::Export::BatchLogRecordProcessor do
       parent_work_thread_id = processor.instance_variable_get(:@thread).object_id
       Process.stub(:pid, parent_pid + rand(1..10)) do
         Thread.stub(:new, -> { raise ThreadError }) do
-          processor.emit(TestLogRecord.new, mock_context)
+          processor.on_emit(TestLogRecord.new, mock_context)
         end
 
         current_pid = processor.instance_variable_get(:@pid)
@@ -468,7 +469,7 @@ describe OpenTelemetry::SDK::Logs::Export::BatchLogRecordProcessor do
         parent_work_thread_id = processor.instance_variable_get(:@thread).object_id
         Process.stub(:pid, parent_pid + rand(1..10)) do
           # Emit a new log record on the forked process and export it.
-          processor.emit(TestLogRecord.new, mock_context)
+          processor.on_emit(TestLogRecord.new, mock_context)
           current_pid = processor.instance_variable_get(:@pid)
           current_work_thread_id = processor.instance_variable_get(:@thread).object_id
           _(parent_pid).wont_equal current_pid
