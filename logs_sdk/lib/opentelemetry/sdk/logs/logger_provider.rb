@@ -65,6 +65,8 @@ module OpenTelemetry
               @registry[Key.new(name, version)] ||= Logger.new(name, version, self)
             end
           end
+
+          Logger.new(name, version, self)
         end
 
         # Adds a new log record processor to this LoggerProvider's
