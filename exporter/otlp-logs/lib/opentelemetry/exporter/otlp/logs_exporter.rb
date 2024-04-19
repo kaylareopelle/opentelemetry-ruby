@@ -157,7 +157,6 @@ module OpenTelemetry
             @http.start unless @http.started?
             response = measure_request_duration { @http.request(request) }
 
-            OpenTelemetry.logger.error("LogsExporter#send_bytes response: #{response}")
             case response
             when Net::HTTPOK
               response.body # Read and discard body
