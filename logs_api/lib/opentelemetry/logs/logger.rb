@@ -39,14 +39,17 @@ module OpenTelemetry
       #   event.
       #
       # @api public
-      def emit(
+      def on_emit(
         timestamp: nil,
         observed_timestamp: nil,
-        context: nil,
         severity_number: nil,
         severity_text: nil,
         body: nil,
-        attributes: nil
+        trace_id: nil,
+        span_id: nil,
+        trace_flags: nil,
+        attributes: nil,
+        context: nil
       )
       end
       # rubocop:enable Style/EmptyMethod

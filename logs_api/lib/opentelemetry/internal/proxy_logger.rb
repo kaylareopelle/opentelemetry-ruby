@@ -36,23 +36,29 @@ module OpenTelemetry
         end
       end
 
-      def emit(
+      def on_emit(
         timestamp: nil,
         observed_timestamp: nil,
-        context: nil,
         severity_number: nil,
         severity_text: nil,
         body: nil,
-        attributes: nil
+        trace_id: nil,
+        span_id: nil,
+        trace_flags: nil,
+        attributes: nil,
+        context: nil
       )
-        @delegate.emit(
+        @delegate.on_emit(
           timestamp: nil,
           observed_timestamp: nil,
-          context: nil,
           severity_number: nil,
           severity_text: nil,
           body: nil,
-          attributes: nil
+          trace_id: nil,
+          span_id: nil,
+          trace_flags: nil,
+          attributes: nil,
+          context: nil
         )
 
         super

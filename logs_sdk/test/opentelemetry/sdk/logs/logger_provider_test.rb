@@ -97,7 +97,7 @@ describe OpenTelemetry::SDK::Logs::LoggerProvider do
       logger = logger_provider.logger(name: nil, version: nil)
       logger2 = logger_provider.logger(name: nil, version: nil)
 
-      assert_instance_of(OpenTelemetry::SDK::Logs::Logger, logger)
+      assert_instance_of(Logs::Logger, logger)
       assert_same(logger, logger2)
     end
 
