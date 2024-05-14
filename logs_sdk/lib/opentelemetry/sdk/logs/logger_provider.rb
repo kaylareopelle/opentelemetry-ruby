@@ -143,6 +143,10 @@ module OpenTelemetry
             results.max || Export::SUCCESS
           end
         end
+
+        def on_emit(log_record, context)
+          @log_record_processors.each { |processor| processor.on_emit(log_record, context) }
+        end
       end
     end
   end
