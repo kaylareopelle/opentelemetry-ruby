@@ -85,7 +85,7 @@ module OpenTelemetry
                      context: OpenTelemetry::Context.current)
 
           current_span = OpenTelemetry::Trace.current_span(context)
-          span_context = OpenTelemetry::Trace::Span::INVALID != current_span ? current_span.context : nil # condition could go either way
+          span_context = current_span.context unless OpenTelemetry::Trace::Span::INVALID == current_span
           log_record = LogRecord.new(timestamp: timestamp,
                                      observed_timestamp: observed_timestamp,
                                      severity_text: severity_text,
