@@ -9,7 +9,9 @@ module OpenTelemetry
     # No-op implementation of a logger provider.
     class LoggerProvider
       NOOP_LOGGER = OpenTelemetry::Logs::Logger.new
-      private_constant :NOOP_LOGGER
+      # This is used in the SDK LoggerProvider
+      # I would like to make it a public constant
+      # private_constant :NOOP_LOGGER 
 
       # Returns an {OpenTelemetry::Logs::Logger} instance.
       #

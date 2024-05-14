@@ -8,6 +8,11 @@ module OpenTelemetry
   module Logs
     # No-op implementation of logger.
     class Logger
+      def initialize
+        @mutex = Mutex.new
+        @instrument_registry = {}
+      end
+
       # rubocop:disable Style/EmptyMethod
 
       # Emit a {LogRecord} to the processing pipeline.
@@ -17,7 +22,7 @@ module OpenTelemetry
       #   time at the source.
       # @param observed_timestamp [optional Float, Time] Time in nanoseconds
       #   since Unix epoch when the event was observed by the collection system.
-      #   Intended default: Process.clock_gettime(Process::CLOCK_REALTIME)
+      #   Intended default: Process.clock_gettime(Process::CLOCK_REALTIME, :nanosecond)
       # @param context [optional Context] The Context to associate with the
       #   LogRecord. Intended default: OpenTelemetry::Context.current
       # @param severity_number [optional Integer] Numerical value of the
@@ -34,14 +39,17 @@ module OpenTelemetry
       #   event.
       #
       # @api public
-      def emit(
+      def on_emit(
         timestamp: nil,
         observed_timestamp: nil,
-        context: nil,
         severity_number: nil,
         severity_text: nil,
         body: nil,
-        attributes: nil
+        trace_id: nil,
+        span_id: nil,
+        trace_flags: nil,
+        attributes: nil,
+        context: nil
       )
       end
       # rubocop:enable Style/EmptyMethod

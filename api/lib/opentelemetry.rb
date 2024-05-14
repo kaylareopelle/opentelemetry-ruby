@@ -28,7 +28,11 @@ module OpenTelemetry
 
   # @return [Object, Logger] configured Logger or a default STDOUT Logger.
   def logger
-    @logger ||= Logger.new($stdout, level: ENV['OTEL_LOG_LEVEL'] || Logger::INFO)
+    @logger ||= create_logger
+    # alternately: Logger.new($stdout, level: ENV['OTEL_LOG_LEVEL'] || Logger::INF, progname: 'OpenTelemetry')
+    # and clean up the log messages that are prefixed with "OpenTelemetry"
+    # if we want log records generated for OpenTelemetry logs, I think we can do that, but I imagine this is
+    # "untraced" territory
   end
 
   # @return [Callable] configured error handler or a default that logs the
@@ -68,5 +72,16 @@ module OpenTelemetry
   # @return [Context::Propagation::Propagator] a propagator instance
   def propagation
     @propagation ||= Context::Propagation::NoopTextMapPropagator.new
+  end
+
+  private
+
+  def create_logger
+    logger = Logger.new($stdout, level: ENV['OTEL_LOG_LEVEL'] || Logger::INFO)
+    # @skip_instrumenting prevents Ruby Logger instrumentation from
+    # triggering a stack overflow. Logs emitted using OpenTelemetry.logger
+    # will not be turned into OpenTelemetry LogRecords.
+    logger.instance_variable_set(:@skip_instrumenting, true)
+    logger
   end
 end
