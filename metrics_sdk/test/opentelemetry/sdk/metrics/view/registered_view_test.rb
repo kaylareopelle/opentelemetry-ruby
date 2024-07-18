@@ -25,7 +25,7 @@ describe OpenTelemetry::SDK::Metrics::View::RegisteredView do
       counter.add(2, attributes: { 'a' => 'b' })
 
       metric_exporter.pull
-      last_snapshot = metric_exporter.metric_snapshots.last
+      last_snapshot = metric_exporter.metric_snapshots
 
       _(last_snapshot).wont_be_empty
       _(last_snapshot[0].name).must_equal('counter')
@@ -60,7 +60,7 @@ describe OpenTelemetry::SDK::Metrics::View::RegisteredView do
       counter.add(4)
 
       metric_exporter.pull
-      last_snapshot = metric_exporter.metric_snapshots.last
+      last_snapshot = metric_exporter.metric_snapshots
 
       _(last_snapshot[0].data_points).wont_be_empty
       _(last_snapshot[0].data_points[0].value).must_equal 4
@@ -83,7 +83,7 @@ describe OpenTelemetry::SDK::Metrics::View::RegisteredView do
       counter.add(4)
 
       metric_exporter.pull
-      last_snapshot = metric_exporter.metric_snapshots.last
+      last_snapshot = metric_exporter.metric_snapshots
 
       _(last_snapshot[0].data_points).wont_be_empty
       _(last_snapshot[0].data_points[0].value).must_equal 10
@@ -102,28 +102,28 @@ describe OpenTelemetry::SDK::Metrics::View::RegisteredView do
 
     it 'registered view with matching name' do
       registered_view.instance_variable_set(:@name, 'test')
-      _(registered_view.match_instrument(metric_stream)).must_equal true
+      _(registered_view.match_instrument?(metric_stream)).must_equal true
     end
 
     it 'registered view with matching type' do
       registered_view.instance_variable_set(:@options, { type: :counter })
-      _(registered_view.match_instrument(metric_stream)).must_equal true
+      _(registered_view.match_instrument?(metric_stream)).must_equal true
     end
 
     it 'registered view with matching version' do
       registered_view.instance_variable_set(:@options, { meter_version: '1.0.1' })
-      _(registered_view.match_instrument(metric_stream)).must_equal true
+      _(registered_view.match_instrument?(metric_stream)).must_equal true
     end
 
     it 'registered view with matching meter_name' do
       registered_view.instance_variable_set(:@options, { meter_name: 'test_scope' })
-      _(registered_view.match_instrument(metric_stream)).must_equal true
+      _(registered_view.match_instrument?(metric_stream)).must_equal true
     end
 
     it 'do not registered view with unmatching name and matching type' do
       registered_view.instance_variable_set(:@options, { type: :counter })
       registered_view.instance_variable_set(:@name, 'tset')
-      _(registered_view.match_instrument(metric_stream)).must_equal false
+      _(registered_view.match_instrument?(metric_stream)).must_equal false
     end
   end
 end

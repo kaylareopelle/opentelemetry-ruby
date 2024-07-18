@@ -28,7 +28,7 @@ module OpenTelemetry
             @description = description
             @unit = unit
             @instrument_kind = instrument_kind
-            @meter_provider  = meter_provider
+            @meter_provider = meter_provider
             @instrumentation_scope = instrumentation_scope
             @default_aggregation = aggregation
             @data_points = {}
@@ -82,7 +82,7 @@ module OpenTelemetry
 
           def find_registered_view
             registered_views = []
-            @meter_provider.registered_views.each { |view| registered_views << view if view.match_instrument(self) }
+            @meter_provider.registered_views.each { |view| registered_views << view if view.match_instrument?(self) }
             registered_views
           end
 
