@@ -127,7 +127,9 @@ module OpenTelemetry
         end
         alias_method :register_asynchronous_instrument, :register_synchronous_instrument
 
-        # Register a view.
+        # A View provides SDK users with the flexibility to customize the metrics that are output by the SDK.
+        #
+        # A View provides SDK users with the flexibility to customize the metrics that are output by the SDK.
         #
         # Example:
         #
@@ -135,23 +137,20 @@ module OpenTelemetry
         #                                         :type => :counter, :unit => 'smidgen',
         #                                         :meter_name => 'test', :meter_version => '1.0')
         #
-        # Note that OpenTelemetry SDK authors MAY choose to support wildcard characters,
-        # with the question mark (?) matching exactly one character and the asterisk
-        # character (*) matching zero or more characters.
         #
         # @param [String] name Name of the view.
-        # @param [optional Hash] options For more precise matching view and metrics stream
+        # @param [optional Hash] options For more precise matching, {View} and {MetricsStream}
         #   options may include:
-        #     aggregation: aggregation type e.g. ExplicitBucketHistogram, Sum, LastValue
-        #     type: instrumentation kind (instrument_kind) e.g. observable_gauge, counter, etc.
-        #     unit: instrumentation unit e.g. smidgen
-        #     meter_name: meter name e.g. meter_provider.meter("sample_meter_name", version: '1.2.0')
-        #     meter_version: meter version e.g. meter_provider.meter("sample_meter_name", version: '1.2.0')
+        #     aggregation: An instance of an aggregation class, e.g. {ExplicitBucketHistogram}, {Sum}, {LastValue}
+        #     type: A Symbol representing the instrument kind, e.g. :observable_gauge, :counter
+        #     unit: A String matching an instrumentation unit, e.g. 'smidgen'
+        #     meter_name: A String matching a meter name, e.g. meter_provider.meter('sample_meter_name', version: '1.2.0'), would be 'sample_meter_name'
+        #     meter_version: A String matching a meter version, e.g. meter_provider.meter('sample_meter_name', version: '1.2.0'), would be '1.2.0'
         #
         # @return [nil] returns nil
         #
-        # TODO: add schema_url as part of options
         def add_view(name, **options)
+          # TODO: add schema_url as part of options
           @registered_views << View::RegisteredView.new(name, **options)
           nil
         end
