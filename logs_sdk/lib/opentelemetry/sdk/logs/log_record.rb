@@ -27,11 +27,12 @@ module OpenTelemetry
 
         # Creates a new {LogRecord}.
         #
-        # @param [optional Float, Time] timestamp Time when the event occurred.
-        # @param [optional Float, Time] observed_timestamp Time when the event
+        # @param [optional Time] timestamp Time when the event occurred.
+        # @param [optional Time] observed_timestamp Time when the event
         #   was observed by the collection system. If nil, will first attempt
-        #   to set to `timestamp`. If `timestamp` is nil, will set to
-        #   `Process.clock_gettime(Process::CLOCK_REALTIME, :nanosecond)`.
+        #   to set to `timestamp`. If `timestamp` is nil, will set to Time.now.
+        # @param [optional OpenTelemetry::Trace::SpanContext] span_context The
+        #   OpenTelemetry::Trace::SpanContext to associate with the LogRecord.
         # @param [optional String] severity_text The log severity, also known as
         #   log level.
         # @param [optional Integer] severity_number The numerical value of the
@@ -46,11 +47,13 @@ module OpenTelemetry
         #   current context.
         # @param [optional String] span_id The span ID associated with the
         #   current context.
-        # @param [optional TraceFlags] trace_flags The trace flags associated
-        #   with the current context.
-        # @param [optional OpenTelemetry::SDK::Logs::Logger] logger The logger that
-        #   created the {LogRecord}. Used to set `resource` and
-        #   `instrumentation_scope`.
+        # @param [optional OpenTelemetry::Trace::TraceFlags] trace_flags The
+        #   trace flags associated with the current context.
+        # @param [optional OpenTelemetry::SDK::Resources::Resource] recource The
+        #   source of the log, desrived from the LoggerProvider.
+        # @param [optional OpenTelemetry::SDK::InstrumentationScope] instrumentation_scope
+        #   The instrumentation scope, derived from the emitting Logger
+        #
         #
         # @return [LogRecord]
         def initialize(
@@ -63,10 +66,11 @@ module OpenTelemetry
           trace_id: nil,
           span_id: nil,
           trace_flags: nil,
-          logger: nil
+          resource: nil,
+          instrumentation_scope: nil
         )
           @timestamp = timestamp
-          @observed_timestamp = observed_timestamp || timestamp || Process.clock_gettime(Process::CLOCK_REALTIME, :nanosecond)
+          @observed_timestamp = observed_timestamp || timestamp || Time.now
           @severity_text = severity_text
           @severity_number = severity_number
           @body = body
@@ -74,9 +78,10 @@ module OpenTelemetry
           @trace_id = trace_id
           @span_id = span_id
           @trace_flags = trace_flags
-          @resource = logger&.resource
-          @instrumentation_scope = logger&.instrumentation_scope
-          @log_record_limits = logger&.log_record_limits || LogRecordLimits::DEFAULT
+          @resource = resource
+          @instrumentation_scope = instrumentation_scope
+          # TODO: fix log record limits
+          @log_record_limits = LogRecordLimits::DEFAULT # logger&.log_record_limits || LogRecordLimits::DEFAULT
           @total_recorded_attributes = @attributes&.size || 0
 
           trim_attributes(@attributes)
@@ -84,8 +89,8 @@ module OpenTelemetry
 
         def to_log_record_data
           LogRecordData.new(
-            @timestamp,
-            @observed_timestamp,
+            to_integer_nanoseconds(@timestamp),
+            to_integer_nanoseconds(@observed_timestamp),
             @severity_text,
             @severity_number,
             @body,
@@ -102,6 +107,7 @@ module OpenTelemetry
         private
 
         # Do we have sufficient logging for dropped attributes?
+        # TODO: Validate attributes the same way as we do in Spans
         def trim_attributes(attributes)
           return if attributes.nil?
 
@@ -123,6 +129,12 @@ module OpenTelemetry
           attributes.transform_values! { |value| OpenTelemetry::Common::Utilities.truncate_attribute_value(value, attribute_length_limit) }
 
           attributes
+        end
+
+        def to_integer_nanoseconds(timestamp)
+          return unless timestamp.is_a?(Time)
+
+          t = (timestamp.to_r * 10**9).to_i
         end
       end
     end

@@ -10,12 +10,6 @@ describe OpenTelemetry::SDK::Logs::Logger do
   let(:logger_provider) { OpenTelemetry::SDK::Logs::LoggerProvider.new }
   let(:logger) { logger_provider.logger(name: 'default_logger') }
 
-  describe '#resource' do
-    it 'returns the resource associated with the logger_provider' do
-      assert_equal(logger.resource, logger_provider.resource)
-    end
-  end
-
   describe '#on_emit' do
     it 'creates a new LogRecord' do
       output = 'chocolate cherry'
@@ -27,7 +21,7 @@ describe OpenTelemetry::SDK::Logs::Logger do
     it 'sends the newly-created log record to the processors' do
       mock_log_record = Minitest::Mock.new
       mock_context = Minitest::Mock.new
-      def mock_context.value(key); OpenTelemetry::Trace::Span::INVALID; end
+      def mock_context.value(key); OpenTelemetry::Trace::Span::INVALID; end # rubocop:disable Style/SingleLineMethods
 
       OpenTelemetry::SDK::Logs::LogRecord.stub(:new, ->(_) { mock_log_record }) do
         mock_log_record_processor = Minitest::Mock.new

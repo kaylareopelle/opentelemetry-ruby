@@ -7,7 +7,7 @@
 require 'test_helper'
 
 describe OpenTelemetry::SDK::Logs::LogRecord do
-  Logs = OpenTelemetry::SDK::Logs # rubocop:disable Lint/ConstantDefinitionInBlock
+  Logs = OpenTelemetry::SDK::Logs
   let(:log_record) { Logs::LogRecord.new(**args) }
   let(:args) { {} }
   let(:logger) { Logs::Logger.new('', '', Logs::LoggerProvider.new) }
@@ -37,7 +37,7 @@ describe OpenTelemetry::SDK::Logs::LogRecord do
       end
 
       describe 'when timestamp is present' do
-        let(:timestamp) { Process.clock_gettime(Process::CLOCK_REALTIME) }
+        let(:timestamp) { Time.now }
         let(:args) { { timestamp: timestamp } }
 
         it 'is equal to timestamp' do
@@ -57,7 +57,7 @@ describe OpenTelemetry::SDK::Logs::LogRecord do
           # I'm going to assert it's an Integer, which is the
           # Process.clock_gettime return value class when passed the
           # :nanosecond option
-          assert_instance_of(Integer, log_record.observed_timestamp)
+          assert_instance_of(Time, log_record.observed_timestamp)
         end
       end
     end
@@ -66,8 +66,8 @@ describe OpenTelemetry::SDK::Logs::LogRecord do
       let(:args) do
         span_context = OpenTelemetry::Trace::SpanContext.new
         {
-          timestamp: Process.clock_gettime(Process::CLOCK_REALTIME),
-          observed_timestamp: Process.clock_gettime(Process::CLOCK_REALTIME),
+          timestamp: Time.now,
+          observed_timestamp: Time.now + 1,
           severity_text: 'DEBUG',
           severity_number: 0,
           body: 'body',
@@ -75,15 +75,16 @@ describe OpenTelemetry::SDK::Logs::LogRecord do
           trace_id: span_context.trace_id,
           span_id: span_context.span_id,
           trace_flags: span_context.trace_flags,
-          logger: logger
+          resource: logger.instance_variable_get(:@logger_provider).instance_variable_get(:@resource),
+          instrumentation_scope: logger.instance_variable_get(:@instrumentation_scope)
         }
       end
 
       it 'transforms the LogRecord into a LogRecordData' do
         log_record_data = log_record.to_log_record_data
 
-        assert_equal(args[:timestamp], log_record_data.timestamp)
-        assert_equal(args[:observed_timestamp], log_record_data.observed_timestamp)
+        assert_equal(args[:timestamp].strftime("%s%N").to_i, log_record_data.timestamp)
+        assert_equal(args[:observed_timestamp].strftime("%s%N").to_i, log_record_data.observed_timestamp)
         assert_equal(args[:severity_text], log_record_data.severity_text)
         assert_equal(args[:severity_number], log_record_data.severity_number)
         assert_equal(args[:body], log_record_data.body)
@@ -91,42 +92,13 @@ describe OpenTelemetry::SDK::Logs::LogRecord do
         assert_equal(args[:trace_id], log_record_data.trace_id)
         assert_equal(args[:span_id], log_record_data.span_id)
         assert_equal(args[:trace_flags], log_record_data.trace_flags)
-        assert_equal(args[:logger].resource, log_record_data.resource)
-        assert_equal(args[:logger].instrumentation_scope, log_record_data.instrumentation_scope)
+        assert_equal(args[:resource], log_record_data.resource)
+        assert_equal(args[:instrumentation_scope], log_record_data.instrumentation_scope)
       end
     end
 
+
     describe 'attributes set through logger' do
-      let(:logger_provider) { Logs::LoggerProvider.new }
-      let(:resource) { OpenTelemetry::SDK::Resources::Resource.create }
-      let(:instrumentation_scope) { OpenTelemetry::SDK::InstrumentationScope.new('name', 'version') }
-      let(:logger) { Logs::Logger.new(resource, instrumentation_scope, logger_provider) }
-      let(:args) { { logger: logger } }
-
-      describe 'resource' do
-        it 'is set to the resource of the logger given on initialization' do
-          assert_equal(logger.resource, log_record.resource)
-        end
-      end
-
-      describe 'instrumentation_scope' do
-        it 'is set to the instrumentation_scope of the logger given on initialization' do
-          assert_equal(logger.instrumentation_scope, log_record.instrumentation_scope)
-        end
-      end
-
-      describe 'when logger is nil' do
-        let(:logger) { nil }
-
-        it 'sets the resource to nil' do
-          assert_nil(log_record.resource)
-        end
-
-        it 'sets the instrumentation_scope to nil' do
-          assert_nil(log_record.instrumentation_scope)
-        end
-      end
-
       describe 'attribute limits' do
         it 'uses the limits set by the logger provider via the logger' do
           limits = Logs::LogRecordLimits.new
