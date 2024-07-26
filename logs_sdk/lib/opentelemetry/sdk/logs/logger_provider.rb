@@ -12,8 +12,6 @@ module OpenTelemetry
         Key = Struct.new(:name, :version)
         private_constant(:Key)
 
-        attr_reader :log_record_limits
-
         UNEXPECTED_ERROR_MESSAGE = 'unexpected error in ' \
           'OpenTelemetry::SDK::Logs::LoggerProvider#%s'
 
@@ -167,7 +165,9 @@ module OpenTelemetry
                                      span_id: span_id,
                                      trace_flags: trace_flags,
                                      resource: @resource,
-                                     instrumentation_scope: instrumentation_scope)
+                                     instrumentation_scope: instrumentation_scope,
+                                     log_record_limits: @log_record_limits
+                                    )
 
           @log_record_processors.each { |processor| processor.on_emit(log_record, context) }
         end

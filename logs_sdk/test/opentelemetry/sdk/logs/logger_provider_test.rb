@@ -26,7 +26,10 @@ describe OpenTelemetry::SDK::Logs::LoggerProvider do
 
   describe '#initialize' do
     it 'activates a default LogRecordLimits' do
-      assert_equal(OpenTelemetry::SDK::Logs::LogRecordLimits::DEFAULT, logger_provider.log_record_limits)
+      assert_equal(
+        OpenTelemetry::SDK::Logs::LogRecordLimits::DEFAULT,
+        logger_provider.instance_variable_get(:@log_record_limits)
+      )
     end
   end
 

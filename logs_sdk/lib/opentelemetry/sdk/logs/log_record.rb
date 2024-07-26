@@ -53,6 +53,9 @@ module OpenTelemetry
         #   source of the log, desrived from the LoggerProvider.
         # @param [optional OpenTelemetry::SDK::InstrumentationScope] instrumentation_scope
         #   The instrumentation scope, derived from the emitting Logger
+        # @param [optional] OpenTelemetry::SDK::LogRecordLimits] log_record_limits
+        #   Attribute limits
+        #
         #
         #
         # @return [LogRecord]
@@ -67,7 +70,8 @@ module OpenTelemetry
           span_id: nil,
           trace_flags: nil,
           resource: nil,
-          instrumentation_scope: nil
+          instrumentation_scope: nil,
+          log_record_limits: nil
         )
           @timestamp = timestamp
           @observed_timestamp = observed_timestamp || timestamp || Time.now
@@ -80,8 +84,7 @@ module OpenTelemetry
           @trace_flags = trace_flags
           @resource = resource
           @instrumentation_scope = instrumentation_scope
-          # TODO: fix log record limits
-          @log_record_limits = LogRecordLimits::DEFAULT # logger&.log_record_limits || LogRecordLimits::DEFAULT
+          @log_record_limits = log_record_limits || LogRecordLimits::DEFAULT
           @total_recorded_attributes = @attributes&.size || 0
 
           trim_attributes(@attributes)
