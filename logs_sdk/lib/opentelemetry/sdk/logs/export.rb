@@ -3,11 +3,12 @@
 # Copyright The OpenTelemetry Authors
 #
 # SPDX-License-Identifier: Apache-2.0
-
 module OpenTelemetry
   module SDK
     module Logs
-      # The Export module contains result codes for exporters
+      ExportError = Class.new(OpenTelemetry::Error)
+      # The export module contains result codes for LoggerProvider#force_flush
+      # and LoggerProvider#shutdown
       module Export
         # The operation finished successfully.
         SUCCESS = 0
@@ -21,3 +22,9 @@ module OpenTelemetry
     end
   end
 end
+
+require_relative 'export/simple_log_record_processor'
+require_relative 'export/batch_log_record_processor'
+require_relative 'export/log_record_exporter'
+require_relative 'export/console_log_record_exporter'
+require_relative 'export/in_memory_log_record_exporter'

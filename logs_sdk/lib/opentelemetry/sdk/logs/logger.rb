@@ -4,6 +4,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+require_relative '../../../../../logs_api/lib/opentelemetry-logs-api'
+
 module OpenTelemetry
   module SDK
     module Logs
@@ -26,6 +28,10 @@ module OpenTelemetry
           @logger_provider = logger_provider
         end
 
+        def log_record_limits
+          logger_provider.log_record_limits
+        end
+
         # Emit a {LogRecord} to the processing pipeline.
         #
         # @param [optional Time] timestamp Time when the event occurred.
@@ -34,6 +40,8 @@ module OpenTelemetry
         # @param [optional OpenTelemetry::Trace::SpanContext] span_context The
         #   OpenTelemetry::Trace::SpanContext to associate with the
         #   {LogRecord}.
+        # @param [optional String] severity_text Original string representation of
+        #   the severity as it is known at the source. Also known as log level.
         # @param severity_number [optional Integer] Numerical value of the
         #   severity. Smaller numerical values correspond to less severe events
         #   (such as debug events), larger numerical values correspond to more
@@ -74,16 +82,16 @@ module OpenTelemetry
           span_context = current_span.context unless current_span == OpenTelemetry::Trace::Span::INVALID
 
           @logger_provider.on_emit(timestamp: timestamp,
-                                  observed_timestamp: observed_timestamp,
-                                  severity_text: severity_text,
-                                  severity_number: severity_number,
-                                  body: body,
-                                  attributes: attributes,
-                                  trace_id: trace_id || span_context&.trace_id,
-                                  span_id: span_id || span_context&.span_id,
-                                  trace_flags: trace_flags || span_context&.trace_flags,
-                                  instrumentation_scope: @instrumentation_scope,
-                                  context: context)
+                                   observed_timestamp: observed_timestamp,
+                                   severity_text: severity_text,
+                                   severity_number: severity_number,
+                                   body: body,
+                                   attributes: attributes,
+                                   trace_id: trace_id || span_context&.trace_id,
+                                   span_id: span_id || span_context&.span_id,
+                                   trace_flags: trace_flags || span_context&.trace_flags,
+                                   instrumentation_scope: @instrumentation_scope,
+                                   context: context)
         end
       end
     end
