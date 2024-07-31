@@ -104,7 +104,7 @@ describe OpenTelemetry::SDK::Logs::LogRecord do
         limits = Logs::LogRecordLimits.new(attribute_count_limit: 1)
         logger_provider = Logs::LoggerProvider.new(log_record_limits: limits)
         console_exporter = Logs::Export::SimpleLogRecordProcessor.new(Logs::Export::ConsoleLogRecordExporter.new)
-        logger_provider.add_log_record_processor(Logs::Export::SimpleLogRecordProcessor.new(Logs::Export::ConsoleLogRecordExporter.new))
+        logger_provider.add_log_record_processor(console_exporter)
 
         # Create a logger that uses the given LoggerProvider
         logger = Logs::Logger.new('', '', logger_provider)
@@ -118,6 +118,20 @@ describe OpenTelemetry::SDK::Logs::LogRecord do
 
         # Return STDOUT to its normal output
         $stdout = original_stdout
+      end
+
+      it 'emits an error message if attribute key is invalid' do
+        OpenTelemetry::TestHelpers.with_test_logger do |log_stream|
+          logger.on_emit(attributes: {:a => 'a'})
+          assert_match(/invalid log record attribute key type Symbol/, log_stream.string)
+        end
+      end
+
+      it 'emits an error message if the attribute value is invalid' do
+        OpenTelemetry::TestHelpers.with_test_logger do |log_stream|
+          logger.on_emit(attributes: {'a' => Class.new})
+          assert_match(/invalid log record attribute value type Class/, log_stream.string)
+        end
       end
 
       it 'uses the default limits if none provided' do

@@ -109,20 +109,39 @@ module OpenTelemetry
 
         private
 
-        # Do we have sufficient logging for dropped attributes?
-        # TODO: Validate attributes the same way as we do in Spans
         def trim_attributes(attributes)
           return if attributes.nil?
 
-          attributes = validate_attribute_keys(attributes)
-          excess = attributes.size - @log_record_limits.attribute_count_limit
-          excess.times { attributes.shift } if excess.positive?
+          # truncate total attributes
+          truncate_attributes(attributes, @log_record_limits.attribute_count_limit)
+
+          # truncate attribute values
           truncate_attribute_values(attributes, @log_record_limits.attribute_length_limit)
+
+          # validate attributes
+          validate_attributes(attributes)
+
           nil
         end
 
-        def validate_attribute_keys(attributes)
-          attributes.delete_if { |k, _v| !k.is_a?(String) || k.empty? }
+        def truncate_attributes(attributes, attribute_limit)
+          excess = attributes.size - attribute_limit
+          excess.times { attributes.shift } if excess.positive?
+        end
+
+        def validate_attributes(attrs)
+          # Similar to Internal.valid_attributes?, but with different messages
+          attrs.keep_if do |k, v|
+            if !Internal.valid_key?(k)
+              OpenTelemetry.handle_error(message: "invalid log record attribute key type #{k.class} on record: '#{body}'")
+              return false
+            elsif !Internal.valid_value?(v)
+              OpenTelemetry.handle_error(message: "invalid log record attribute value type #{v.class} for key '#{k}' on record: '#{body}'")
+              return false
+            end
+
+            true
+          end
         end
 
         def truncate_attribute_values(attributes, attribute_length_limit)
@@ -137,7 +156,7 @@ module OpenTelemetry
         def to_integer_nanoseconds(timestamp)
           return unless timestamp.is_a?(Time)
 
-          t = (timestamp.to_r * 10**9).to_i
+          (timestamp.to_r * 10**9).to_i
         end
       end
     end
