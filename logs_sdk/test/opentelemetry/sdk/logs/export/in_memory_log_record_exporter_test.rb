@@ -7,11 +7,11 @@
 require 'test_helper'
 
 describe OpenTelemetry::SDK::Logs::Export::InMemoryLogRecordExporter do
-  Export = OpenTelemetry::SDK::Logs::Export # rubocop:disable Lint/ConstantDefinitionInBlock
+  export = OpenTelemetry::SDK::Logs::Export
 
   let(:log_record_data1) { OpenTelemetry::SDK::Logs::LogRecordData.new }
   let(:log_record_data2) { OpenTelemetry::SDK::Logs::LogRecordData.new }
-  let(:exporter)         { OpenTelemetry::SDK::Logs::Export::InMemoryLogRecordExporter.new }
+  let(:exporter)         { export::InMemoryLogRecordExporter.new }
 
   it 'accepts an Array of LogRecordDatas as argument to #export' do
     exporter.export([log_record_data1, log_record_data2])
@@ -56,18 +56,18 @@ describe OpenTelemetry::SDK::Logs::Export::InMemoryLogRecordExporter do
   end
 
   it 'returns success from #export' do
-    assert_equal(Export::SUCCESS, exporter.export([log_record_data1]))
+    assert_equal(export::SUCCESS, exporter.export([log_record_data1]))
   end
 
   it 'returns success from #force_flush' do
-    assert_equal(Export::SUCCESS, exporter.force_flush)
+    assert_equal(export::SUCCESS, exporter.force_flush)
   end
 
   it 'returns error from #export after #shutdown called' do
     exporter.export([log_record_data1])
     exporter.shutdown
 
-    assert_equal(Export::FAILURE, exporter.export([log_record_data2]))
+    assert_equal(export::FAILURE, exporter.export([log_record_data2]))
   end
 
   it 'returns an empty array from #export after #shutdown called' do
