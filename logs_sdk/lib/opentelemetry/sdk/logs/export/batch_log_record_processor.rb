@@ -15,7 +15,7 @@ module OpenTelemetry
         #
         # Typically, the BatchLogRecordProcessor will be more suitable for
         # production environments than the SimpleLogRecordProcessor.
-        class BatchLogRecordProcessor < LogRecordProcessor
+        class BatchLogRecordProcessor < LogRecordProcessor # rubocop:disable Metrics/ClassLength
           # Returns a new instance of the {BatchLogRecordProcessor}.
           #
           # @param [LogRecordExporter] exporter The (duck type) LogRecordExporter to where the

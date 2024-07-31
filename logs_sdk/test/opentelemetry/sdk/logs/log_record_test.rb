@@ -79,8 +79,8 @@ describe OpenTelemetry::SDK::Logs::LogRecord do
       it 'transforms the LogRecord into a LogRecordData' do
         log_record_data = log_record.to_log_record_data
 
-        assert_equal(args[:timestamp].strftime("%s%N").to_i, log_record_data.timestamp)
-        assert_equal(args[:observed_timestamp].strftime("%s%N").to_i, log_record_data.observed_timestamp)
+        assert_equal(args[:timestamp].strftime('%s%N').to_i, log_record_data.timestamp)
+        assert_equal(args[:observed_timestamp].strftime('%s%N').to_i, log_record_data.observed_timestamp)
         assert_equal(args[:severity_text], log_record_data.severity_text)
         assert_equal(args[:severity_number], log_record_data.severity_number)
         assert_equal(args[:body], log_record_data.body)
@@ -110,11 +110,11 @@ describe OpenTelemetry::SDK::Logs::LogRecord do
         logger = Logs::Logger.new('', '', logger_provider)
 
         # Emit a log from that logger, with attribute count exceeding the limit
-        logger.on_emit(attributes: {'a' => 'a', 'b' => 'b'})
+        logger.on_emit(attributes: { 'a' => 'a', 'b' => 'b' })
 
         # Look at the captured output to see if the attributes have been truncated
-        assert_match(/attributes={\"b\"=>\"b\"}/, captured_stdout.string)
-        refute_match(/\"a\"=>\"a\"/, captured_stdout.string)
+        assert_match(/attributes={"b"=>"b"}/, captured_stdout.string)
+        refute_match(/"a"=>"a"/, captured_stdout.string)
 
         # Return STDOUT to its normal output
         $stdout = original_stdout
@@ -122,14 +122,14 @@ describe OpenTelemetry::SDK::Logs::LogRecord do
 
       it 'emits an error message if attribute key is invalid' do
         OpenTelemetry::TestHelpers.with_test_logger do |log_stream|
-          logger.on_emit(attributes: {:a => 'a'})
+          logger.on_emit(attributes: { a: 'a' })
           assert_match(/invalid log record attribute key type Symbol/, log_stream.string)
         end
       end
 
       it 'emits an error message if the attribute value is invalid' do
         OpenTelemetry::TestHelpers.with_test_logger do |log_stream|
-          logger.on_emit(attributes: {'a' => Class.new})
+          logger.on_emit(attributes: { 'a' => Class.new })
           assert_match(/invalid log record attribute value type Class/, log_stream.string)
         end
       end

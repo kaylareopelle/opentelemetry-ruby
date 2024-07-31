@@ -12,8 +12,6 @@ require_relative 'logs/log_record'
 require_relative 'logs/log_record_data'
 require_relative 'logs/log_record_processor'
 require_relative 'logs/export'
-require_relative 'logs/log_record'
-require_relative 'logs/log_record_data'
 require_relative 'logs/log_record_limits'
 
 module OpenTelemetry

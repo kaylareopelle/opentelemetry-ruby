@@ -166,8 +166,7 @@ module OpenTelemetry
                                      trace_flags: trace_flags,
                                      resource: @resource,
                                      instrumentation_scope: instrumentation_scope,
-                                     log_record_limits: @log_record_limits
-                                    )
+                                     log_record_limits: @log_record_limits)
 
           @log_record_processors.each { |processor| processor.on_emit(log_record, context) }
         end
