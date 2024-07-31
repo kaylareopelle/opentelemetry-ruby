@@ -7,7 +7,7 @@
 require 'test_helper'
 
 describe OpenTelemetry::SDK::Logs::LogRecord do
-  Logs = OpenTelemetry::SDK::Logs # rubocop:disable Lint/ConstantDefinitionInBlock
+  Logs = OpenTelemetry::SDK::Logs
   let(:log_record) { Logs::LogRecord.new(**args) }
   let(:args) { {} }
   let(:logger) { Logs::Logger.new('', '', Logs::LoggerProvider.new) }
@@ -15,7 +15,8 @@ describe OpenTelemetry::SDK::Logs::LogRecord do
   describe '#initialize' do
     describe 'observed_timestamp' do
       describe 'when observed_timestamp is present' do
-        let(:observed_timestamp) { '1692661486.2841358' }
+        let(:current_time) { Time.now }
+        let(:observed_timestamp) { current_time + 1 }
         let(:args) { { observed_timestamp: observed_timestamp } }
 
         it 'is equal to observed_timestamp' do
@@ -26,18 +27,13 @@ describe OpenTelemetry::SDK::Logs::LogRecord do
           refute_equal(log_record.timestamp, log_record.observed_timestamp)
         end
 
-        # Process.clock_gettime is used to set the current time
-        # That method returns a Float. Since the stubbed value of
-        # observed_timestamp is a String, we can know the the
-        # observed_timestamp was not set to the value of Process.clock_gettime
-        # by making sure its value is not a Float.
         it 'is not equal to the current time' do
-          refute_instance_of(Float, log_record.observed_timestamp)
+          refute_equal(current_time, log_record.observed_timestamp)
         end
       end
 
       describe 'when timestamp is present' do
-        let(:timestamp) { Process.clock_gettime(Process::CLOCK_REALTIME) }
+        let(:timestamp) { Time.now }
         let(:args) { { timestamp: timestamp } }
 
         it 'is equal to timestamp' do
@@ -57,7 +53,7 @@ describe OpenTelemetry::SDK::Logs::LogRecord do
           # I'm going to assert it's an Integer, which is the
           # Process.clock_gettime return value class when passed the
           # :nanosecond option
-          assert_instance_of(Integer, log_record.observed_timestamp)
+          assert_instance_of(Time, log_record.observed_timestamp)
         end
       end
     end
@@ -66,8 +62,8 @@ describe OpenTelemetry::SDK::Logs::LogRecord do
       let(:args) do
         span_context = OpenTelemetry::Trace::SpanContext.new
         {
-          timestamp: Process.clock_gettime(Process::CLOCK_REALTIME),
-          observed_timestamp: Process.clock_gettime(Process::CLOCK_REALTIME),
+          timestamp: Time.now,
+          observed_timestamp: Time.now + 1,
           severity_text: 'DEBUG',
           severity_number: 0,
           body: 'body',
@@ -75,15 +71,16 @@ describe OpenTelemetry::SDK::Logs::LogRecord do
           trace_id: span_context.trace_id,
           span_id: span_context.span_id,
           trace_flags: span_context.trace_flags,
-          logger: logger
+          resource: logger.instance_variable_get(:@logger_provider).instance_variable_get(:@resource),
+          instrumentation_scope: logger.instance_variable_get(:@instrumentation_scope)
         }
       end
 
       it 'transforms the LogRecord into a LogRecordData' do
         log_record_data = log_record.to_log_record_data
 
-        assert_equal(args[:timestamp], log_record_data.timestamp)
-        assert_equal(args[:observed_timestamp], log_record_data.observed_timestamp)
+        assert_equal(args[:timestamp].strftime("%s%N").to_i, log_record_data.timestamp)
+        assert_equal(args[:observed_timestamp].strftime("%s%N").to_i, log_record_data.observed_timestamp)
         assert_equal(args[:severity_text], log_record_data.severity_text)
         assert_equal(args[:severity_number], log_record_data.severity_number)
         assert_equal(args[:body], log_record_data.body)
@@ -91,95 +88,74 @@ describe OpenTelemetry::SDK::Logs::LogRecord do
         assert_equal(args[:trace_id], log_record_data.trace_id)
         assert_equal(args[:span_id], log_record_data.span_id)
         assert_equal(args[:trace_flags], log_record_data.trace_flags)
-        assert_equal(args[:logger].resource, log_record_data.resource)
-        assert_equal(args[:logger].instrumentation_scope, log_record_data.instrumentation_scope)
+        assert_equal(args[:resource], log_record_data.resource)
+        assert_equal(args[:instrumentation_scope], log_record_data.instrumentation_scope)
       end
     end
 
-    describe 'attributes set through logger' do
-      let(:logger_provider) { Logs::LoggerProvider.new }
-      let(:resource) { OpenTelemetry::SDK::Resources::Resource.create }
-      let(:instrumentation_scope) { OpenTelemetry::SDK::InstrumentationScope.new('name', 'version') }
-      let(:logger) { Logs::Logger.new(resource, instrumentation_scope, logger_provider) }
-      let(:args) { { logger: logger } }
+    describe 'attribute limits' do
+      it 'uses the limits set by the logger provider via the logger' do
+        # Spy on the console output
+        captured_stdout = StringIO.new
+        original_stdout = $stdout
+        $stdout = captured_stdout
 
-      describe 'resource' do
-        it 'is set to the resource of the logger given on initialization' do
-          assert_equal(logger.resource, log_record.resource)
-        end
+        # Create the LoggerProvider with the console exporter and an attribute limit of 1
+        limits = Logs::LogRecordLimits.new(attribute_count_limit: 1)
+        logger_provider = Logs::LoggerProvider.new(log_record_limits: limits)
+        console_exporter = Logs::Export::SimpleLogRecordProcessor.new(Logs::Export::ConsoleLogRecordExporter.new)
+        logger_provider.add_log_record_processor(Logs::Export::SimpleLogRecordProcessor.new(Logs::Export::ConsoleLogRecordExporter.new))
+
+        # Create a logger that uses the given LoggerProvider
+        logger = Logs::Logger.new('', '', logger_provider)
+
+        # Emit a log from that logger, with attribute count exceeding the limit
+        logger.on_emit(attributes: {'a' => 'a', 'b' => 'b'})
+
+        # Look at the captured output to see if the attributes have been truncated
+        assert_match(/attributes={\"b\"=>\"b\"}/, captured_stdout.string)
+        refute_match(/\"a\"=>\"a\"/, captured_stdout.string)
+
+        # Return STDOUT to its normal output
+        $stdout = original_stdout
       end
 
-      describe 'instrumentation_scope' do
-        it 'is set to the instrumentation_scope of the logger given on initialization' do
-          assert_equal(logger.instrumentation_scope, log_record.instrumentation_scope)
-        end
+      it 'uses the default limits if none provided' do
+        log_record = Logs::LogRecord.new
+        default = Logs::LogRecordLimits::DEFAULT
+
+        assert_equal(default.attribute_count_limit, log_record.instance_variable_get(:@log_record_limits).attribute_count_limit)
+        # default length is nil
+        assert_nil(log_record.instance_variable_get(:@log_record_limits).attribute_length_limit)
       end
 
-      describe 'when logger is nil' do
-        let(:logger) { nil }
+      it 'trims the oldest attributes' do
+        limits = Logs::LogRecordLimits.new(attribute_count_limit: 1)
+        attributes = { 'old' => 'old', 'new' => 'new' }
+        log_record = Logs::LogRecord.new(log_record_limits: limits, attributes: attributes)
 
-        it 'sets the resource to nil' do
-          assert_nil(log_record.resource)
-        end
+        assert_equal({ 'new' => 'new' }, log_record.attributes)
+      end
+    end
 
-        it 'sets the instrumentation_scope to nil' do
-          assert_nil(log_record.instrumentation_scope)
-        end
+    describe 'attribute value limit' do
+      it 'truncates the values that are too long' do
+        length_limit = 32
+        too_long = 'a' * (length_limit + 1)
+        just_right = 'a' * (length_limit - 3) # truncation removes 3 chars for the '...'
+        limits = Logs::LogRecordLimits.new(attribute_length_limit: length_limit)
+        log_record = Logs::LogRecord.new(log_record_limits: limits, attributes: { 'key' => too_long })
+
+        assert_equal({ 'key' => "#{just_right}..." }, log_record.attributes)
       end
 
-      describe 'attribute limits' do
-        it 'uses the limits set by the logger provider via the logger' do
-          limits = Logs::LogRecordLimits.new
-          logger_provider = Logs::LoggerProvider.new(log_record_limits: limits)
-          logger = Logs::Logger.new('', '', logger_provider)
-          log_record = Logs::LogRecord.new(logger: logger)
+      it 'does not alter values within the range' do
+        length_limit = 32
+        within_range = 'a' * length_limit
+        limits = Logs::LogRecordLimits.new(attribute_length_limit: length_limit)
+        log_record = Logs::LogRecord.new(log_record_limits: limits, attributes: { 'key' => within_range })
 
-          assert_equal(log_record.instance_variable_get(:@log_record_limits), limits)
-        end
-
-        it 'uses the default limits if none provided' do
-          log_record = Logs::LogRecord.new
-          default = Logs::LogRecordLimits::DEFAULT
-
-          assert_equal(default.attribute_count_limit, log_record.instance_variable_get(:@log_record_limits).attribute_count_limit)
-          # default length is nil
-          assert_nil(log_record.instance_variable_get(:@log_record_limits).attribute_length_limit)
-        end
-
-        it 'trims the oldest attributes' do
-          limits = Logs::LogRecordLimits.new(attribute_count_limit: 1)
-          logger_provider = Logs::LoggerProvider.new(log_record_limits: limits)
-          logger = Logs::Logger.new('', '', logger_provider)
-          attributes = { 'old' => 'old', 'new' => 'new' }
-          log_record = Logs::LogRecord.new(logger: logger, attributes: attributes)
-
-          assert_equal({ 'new' => 'new' }, log_record.attributes)
-        end
-      end
-
-      describe 'attribute value limit' do
-        it 'truncates the values that are too long' do
-          length_limit = 32
-          too_long = 'a' * (length_limit + 1)
-          just_right = 'a' * (length_limit - 3) # truncation removes 3 chars for the '...'
-          limits = Logs::LogRecordLimits.new(attribute_length_limit: length_limit)
-          logger_provider = Logs::LoggerProvider.new(log_record_limits: limits)
-          logger = Logs::Logger.new('', '', logger_provider)
-          log_record = Logs::LogRecord.new(logger: logger, attributes: { 'key' => too_long })
-
-          assert_equal({ 'key' => "#{just_right}..." }, log_record.attributes)
-        end
-
-        it 'does not alter values within the range' do
-          length_limit = 32
-          within_range = 'a' * length_limit
-          limits = Logs::LogRecordLimits.new(attribute_length_limit: length_limit)
-          logger_provider = Logs::LoggerProvider.new(log_record_limits: limits)
-          logger = Logs::Logger.new('', '', logger_provider)
-          log_record = Logs::LogRecord.new(logger: logger, attributes: { 'key' => within_range })
-
-          assert_equal({ 'key' => within_range }, log_record.attributes)
-        end
+        assert_equal({ 'key' => within_range }, log_record.attributes)
       end
     end
   end
