@@ -86,7 +86,7 @@ module OpenTelemetry
         # metrics Array[MetricData]
         def export(metrics, timeout: nil)
           @mutex.synchronize do
-            send_bytes(encode(metrics), timeout: timeout)
+            send_bytes(encode(metrics), timeout: timeout) unless metrics.nil?
           end
         end
 
@@ -270,6 +270,9 @@ module OpenTelemetry
         end
 
         def histogram_data_point(hdp)
+          puts '************'
+          puts hdp
+          puts '************'
           Opentelemetry::Proto::Metrics::V1::HistogramDataPoint.new(
             attributes: hdp.attributes.map { |k, v| as_otlp_key_value(k, v) },
             start_time_unix_nano: hdp.start_time_unix_nano,
