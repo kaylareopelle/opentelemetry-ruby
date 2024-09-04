@@ -18,11 +18,13 @@ require 'opentelemetry/sdk'
 require 'opentelemetry-metrics-sdk'
 require 'opentelemetry-exporter-otlp-metrics'
 
+ENV['OTEL_EXPORTER_OTLP_METRICS_ENDPOINT'] = 'http://host.docker.internal:4318/v1/metrics'
 OpenTelemetry::SDK.configure
 
 otlp_metric_exporter = OpenTelemetry::Exporter::OTLP::Metrics::MetricsExporter.new
 
 OpenTelemetry.meter_provider.add_metric_reader(otlp_metric_exporter)
+OpenTelemetry.meter_provider.add_metric_reader(OpenTelemetry::SDK::Metrics::Export::ConsoleMetricPullExporter.new)
 
 meter = OpenTelemetry.meter_provider.meter("SAMPLE_METER_NAME")
 
