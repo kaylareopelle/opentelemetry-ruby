@@ -9,6 +9,9 @@ module OpenTelemetry
     module Logs
       # The SDK implementation of OpenTelemetry::Logs::LoggerProvider.
       class LoggerProvider < OpenTelemetry::Logs::LoggerProvider
+        Key = Struct.new(:name, :version)
+        private_constant(:Key)
+
         UNEXPECTED_ERROR_MESSAGE = 'unexpected error in ' \
           'OpenTelemetry::SDK::Logs::LoggerProvider#%s'
 
@@ -18,13 +21,18 @@ module OpenTelemetry
         #
         # @param [optional Resource] resource The resource to associate with
         #   new LogRecords created by {Logger}s created by this LoggerProvider.
+        # @param [optional LogRecordLimits] log_record_limits The limits for
+        #   attributes count and attribute length for LogRecords.
         #
         # @return [OpenTelemetry::SDK::Logs::LoggerProvider]
-        def initialize(resource: OpenTelemetry::SDK::Resources::Resource.create)
+        def initialize(resource: OpenTelemetry::SDK::Resources::Resource.create, log_record_limits: LogRecordLimits::DEFAULT)
           @log_record_processors = []
+          @log_record_limits = log_record_limits
           @mutex = Mutex.new
           @resource = resource
           @stopped = false
+          @registry = {}
+          @registry_mutex = Mutex.new
         end
 
         # Returns an {OpenTelemetry::SDK::Logs::Logger} instance.
@@ -34,14 +42,21 @@ module OpenTelemetry
         #
         # @return [OpenTelemetry::SDK::Logs::Logger]
         def logger(name:, version: nil)
-          version ||= ''
+          if @stopped
+            OpenTelemetry.logger.warn('calling LoggerProvider#logger after shutdown, a noop logger will be returned')
+            OpenTelemetry::Logs::Logger.new
+          else
+            version ||= ''
 
-          if !name.is_a?(String) || name.empty?
-            OpenTelemetry.logger.warn('LoggerProvider#logger called with an ' \
-              "invalid name. Name provided: #{name.inspect}")
+            if !name.is_a?(String) || name.empty?
+              OpenTelemetry.logger.warn('LoggerProvider#logger called with an ' \
+                "invalid name. Name provided: #{name.inspect}")
+            end
+
+            @registry_mutex.synchronize do
+              @registry[Key.new(name, version)] ||= Logger.new(name, version, self)
+            end
           end
-
-          Logger.new(name, version, self)
         end
 
         # Adds a new log record processor to this LoggerProvider's
@@ -142,7 +157,8 @@ module OpenTelemetry
                                      span_id: span_id,
                                      trace_flags: trace_flags,
                                      resource: @resource,
-                                     instrumentation_scope: instrumentation_scope)
+                                     instrumentation_scope: instrumentation_scope,
+                                     log_record_limits: @log_record_limits)
 
           @log_record_processors.each { |processor| processor.on_emit(log_record, context) }
         end
