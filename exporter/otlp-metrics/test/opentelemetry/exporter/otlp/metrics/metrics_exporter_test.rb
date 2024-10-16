@@ -644,6 +644,7 @@ describe OpenTelemetry::Exporter::OTLP::Metrics::MetricsExporter do
       assert_requested(:post, 'http://localhost:4318/v1/metrics') do |req|
         req.body == Zlib.gzip(encoded_etsr) # is asserting that the body of the HTTP request is equal to the result of gzipping the encoded_etsr.
       end
+      puts '*********************************************'
     end
   end
 end
