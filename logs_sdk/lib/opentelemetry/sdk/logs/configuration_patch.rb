@@ -9,8 +9,8 @@ require 'opentelemetry/sdk/configurator'
 module OpenTelemetry
   module SDK
     module Logs
-      # The ConfiguratorPatch implements a hook to configure the logs
-      # portion of the SDK.
+      # The ConfiguratorPatch implements a hook to configure the logs portion
+      # of the SDK.
       module ConfiguratorPatch
         def add_log_record_processor(log_record_processor)
           @log_record_processors << log_record_processor
@@ -23,8 +23,8 @@ module OpenTelemetry
           @log_record_processors = []
         end
 
-        # The logs_configuration_hook method is where we define the setup process
-        # for logs SDK.
+        # The logs_configuration_hook method is where we define the setup
+        # process for logs SDK.
         def logs_configuration_hook
           OpenTelemetry.logger_provider = Logs::LoggerProvider.new(resource: @resource)
           configure_log_record_processors
@@ -36,7 +36,7 @@ module OpenTelemetry
         end
 
         def wrapped_log_exporters_from_env
-          # default is console until other exporters built
+          # TODO: set default to OTLP to match traces, default is console until other exporters merged
           exporters = ENV.fetch('OTEL_LOGS_EXPORTER', 'console')
 
           exporters.split(',').map do |exporter|
@@ -50,8 +50,12 @@ module OpenTelemetry
                 OpenTelemetry.logger.warn "The #{otlp_protocol} transport protocol is not supported by the OTLP exporter, log_records will not be exported."
                 nil
               else
-                Logs::Export::BatchLogRecordProcessor.new(OpenTelemetry::Exporter::OTLP::LogsExporter.new)
-                # fetch_exporter(exporter, 'OpenTelemetry::Exporter::OTLP::Exporter')
+                begin
+                  Logs::Export::BatchLogRecordProcessor.new(OpenTelemetry::Exporter::OTLP::LogsExporter.new)
+                rescue NameError
+                  OpenTelemetry.logger.warn 'The otlp logs exporter cannot be configured - please add opentelemetry-exporter-otlp-logs to your Gemfile. Logs will not be exported'
+                  nil
+                end
               end
             else
               OpenTelemetry.logger.warn "The #{exporter} exporter is unknown and cannot be configured, log records will not be exported"

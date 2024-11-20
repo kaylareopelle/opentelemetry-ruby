@@ -57,7 +57,6 @@ module OpenTelemetry
         #   Attribute limits
         #
         #
-        #
         # @return [LogRecord]
         def initialize(
           timestamp: nil,
@@ -109,6 +108,12 @@ module OpenTelemetry
 
         private
 
+        def to_integer_nanoseconds(timestamp)
+          return unless timestamp.is_a?(Time)
+
+          (timestamp.to_r * 10**9).to_i
+        end
+
         def trim_attributes(attributes)
           return if attributes.nil?
 
@@ -131,6 +136,7 @@ module OpenTelemetry
 
         def validate_attributes(attrs)
           # Similar to Internal.valid_attributes?, but with different messages
+          # Future refactor opportunity: https://github.com/open-telemetry/opentelemetry-ruby/issues/1739
           attrs.keep_if do |k, v|
             if !Internal.valid_key?(k)
               OpenTelemetry.handle_error(message: "invalid log record attribute key type #{k.class} on record: '#{body}'")
@@ -151,12 +157,6 @@ module OpenTelemetry
           attributes.transform_values! { |value| OpenTelemetry::Common::Utilities.truncate_attribute_value(value, attribute_length_limit) }
 
           attributes
-        end
-
-        def to_integer_nanoseconds(timestamp)
-          return unless timestamp.is_a?(Time)
-
-          (timestamp.to_r * 10**9).to_i
         end
       end
     end
