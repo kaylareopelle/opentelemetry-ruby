@@ -14,8 +14,8 @@ Gem::Specification.new do |spec|
   spec.authors     = ['OpenTelemetry Authors']
   spec.email       = ['cncf-opentelemetry-contributors@lists.cncf.io']
 
-  spec.summary     = 'OTLP exporter for the OpenTelemetry framework'
-  spec.description = 'OTLP exporter for the OpenTelemetry framework'
+  spec.summary     = 'Experimental OTLP Logs exporter for the OpenTelemetry framework'
+  spec.description = 'Experimental OTLP Logs exporter for the OpenTelemetry framework'
   spec.homepage    = 'https://github.com/open-telemetry/opentelemetry-ruby'
   spec.license     = 'Apache-2.0'
 
@@ -26,11 +26,11 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = '>= 3.0'
 
   spec.add_dependency 'googleapis-common-protos-types', '~> 1.3'
-  spec.add_dependency 'google-protobuf', '~> 3.14'
+  spec.add_dependency 'google-protobuf', '>= 3.18'
   spec.add_dependency 'opentelemetry-api', '~> 1.1'
   spec.add_dependency 'opentelemetry-common', '~> 0.20'
-  spec.add_dependency 'opentelemetry-logs-api'
-  spec.add_dependency 'opentelemetry-logs-sdk'
+  spec.add_dependency 'opentelemetry-logs-api', '~> 0.1'
+  spec.add_dependency 'opentelemetry-logs-sdk', '~> 0.1'
   spec.add_dependency 'opentelemetry-sdk'
   spec.add_dependency 'opentelemetry-semantic_conventions'
 

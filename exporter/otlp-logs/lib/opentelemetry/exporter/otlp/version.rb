@@ -7,8 +7,8 @@
 module OpenTelemetry
   module Exporter
     module OTLP
-      ## Current OpenTelemetry OTLP exporter version
-      VERSION = '0.26.3'
+      ## Current OpenTelemetry OTLP logs exporter version
+      VERSION = '0.1.0'
     end
   end
 end
