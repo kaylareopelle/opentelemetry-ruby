@@ -576,8 +576,12 @@ describe OpenTelemetry::Exporter::OTLP::Metrics::MetricsExporter do
       stub_request(:post, 'http://localhost:4318/v1/metrics').to_return(status: 200)
       meter_provider.add_metric_reader(exporter)
       meter   = meter_provider.meter('test')
-      counter = meter.create_counter('test_counter', unit: 'smidgen', description: 'a small amount of something')
+      counter = meter.create_counter('test_as_double_counter', unit: 'smidgen', description: 'a small amount of something')
       counter.add(5, attributes: { 'foo' => 'bar' })
+      counter.add(1.5, attributes: { 'foo' => 'bar' })
+
+      counter = meter.create_counter('test_int_counter', unit: 'smidgen', description: 'a small amount of something')
+      counter.add(1, attributes: { 'pinch' => 'salt' })
 
       histogram = meter.create_histogram('test_histogram', unit: 'smidgen', description: 'a small amount of something')
       histogram.record(10, attributes: { 'oof' => 'rab' })
@@ -603,7 +607,7 @@ describe OpenTelemetry::Exporter::OTLP::Metrics::MetricsExporter do
                   ),
                   metrics: [
                     Opentelemetry::Proto::Metrics::V1::Metric.new(
-                      name: 'test_counter',
+                      name: 'test_as_double_counter',
                       description: 'a small amount of something',
                       unit: 'smidgen',
                       sum: Opentelemetry::Proto::Metrics::V1::Sum.new(
@@ -612,7 +616,26 @@ describe OpenTelemetry::Exporter::OTLP::Metrics::MetricsExporter do
                             attributes: [
                               Opentelemetry::Proto::Common::V1::KeyValue.new(key: 'foo', value: Opentelemetry::Proto::Common::V1::AnyValue.new(string_value: 'bar'))
                             ],
-                            as_int: 5,
+                            as_double: 6.5,
+                            start_time_unix_nano: 1_699_593_427_329_946_585,
+                            time_unix_nano: 1_699_593_427_329_946_586,
+                            exemplars: nil
+                          )
+                        ],
+                        aggregation_temporality: Opentelemetry::Proto::Metrics::V1::AggregationTemporality::AGGREGATION_TEMPORALITY_DELTA
+                      )
+                    ),
+                    Opentelemetry::Proto::Metrics::V1::Metric.new(
+                      name: 'test_int_counter',
+                      description: 'a small amount of something',
+                      unit: 'smidgen',
+                      sum: Opentelemetry::Proto::Metrics::V1::Sum.new(
+                        data_points: [
+                          Opentelemetry::Proto::Metrics::V1::NumberDataPoint.new(
+                            attributes: [
+                              Opentelemetry::Proto::Common::V1::KeyValue.new(key: 'pinch', value: Opentelemetry::Proto::Common::V1::AnyValue.new(string_value: 'salt'))
+                            ],
+                            as_int: 1,
                             start_time_unix_nano: 1_699_593_427_329_946_585,
                             time_unix_nano: 1_699_593_427_329_946_586,
                             exemplars: nil
