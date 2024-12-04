@@ -8,11 +8,6 @@ module OpenTelemetry
   module Logs
     # No-op implementation of logger.
     class Logger
-      def initialize
-        @mutex = Mutex.new
-        @instrument_registry = {}
-      end
-
       # rubocop:disable Style/EmptyMethod
 
       # Emit a {LogRecord} to the processing pipeline.
