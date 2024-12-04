@@ -23,10 +23,8 @@ This gem supports the [v0.20.0 release][otel-proto-release] of OTLP.
 Install the gem using:
 
 ```console
-
 gem install opentelemetry-logs-sdk
-gem install opentelemetry-exporter-otlp
-
+gem install opentelemetry-exporter-otlp-logs
 ```
 
 Or, if you use [bundler][bundler-home], include `opentelemetry-sdk` in your `Gemfile`.

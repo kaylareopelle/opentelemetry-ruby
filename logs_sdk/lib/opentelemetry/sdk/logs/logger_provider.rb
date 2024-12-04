@@ -35,7 +35,7 @@ module OpenTelemetry
           @registry_mutex = Mutex.new
         end
 
-        # Returns an {OpenTelemetry::SDK::Logs::Logger} instance.
+        # Creates an {OpenTelemetry::SDK::Logs::Logger} instance.
         #
         # @param [String] name Instrumentation package name
         # @param [optional String] version Instrumentation package version
