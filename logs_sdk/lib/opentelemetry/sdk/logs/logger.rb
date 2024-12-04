@@ -4,8 +4,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-require_relative '../../../../../logs_api/lib/opentelemetry-logs-api'
-
 module OpenTelemetry
   module SDK
     module Logs
@@ -26,10 +24,6 @@ module OpenTelemetry
         def initialize(name, version, logger_provider)
           @instrumentation_scope = InstrumentationScope.new(name, version)
           @logger_provider = logger_provider
-        end
-
-        def log_record_limits
-          logger_provider.log_record_limits
         end
 
         # Emit a {LogRecord} to the processing pipeline.

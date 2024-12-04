@@ -42,20 +42,11 @@ module OpenTelemetry
         #
         # @return [OpenTelemetry::SDK::Logs::Logger]
         def logger(name:, version: nil)
-          if @stopped
-            OpenTelemetry.logger.warn('calling LoggerProvider#logger after shutdown, a noop logger will be returned')
-            OpenTelemetry::Logs::LoggerProvider::NOOP_LOGGER
-          else
-            version ||= ''
+          version ||= ''
 
-            if !name.is_a?(String) || name.empty?
-              OpenTelemetry.logger.warn('LoggerProvider#logger called with an ' \
-                "invalid name. Name provided: #{name.inspect}")
-            end
-
-            @registry_mutex.synchronize do
-              @registry[Key.new(name, version)] ||= Logger.new(name, version, self)
-            end
+          if !name.is_a?(String) || name.empty?
+            OpenTelemetry.logger.warn('LoggerProvider#logger called with an ' \
+              "invalid name. Name provided: #{name.inspect}")
           end
 
           @registry_mutex.synchronize do
