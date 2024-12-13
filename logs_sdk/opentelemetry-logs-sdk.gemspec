@@ -43,4 +43,7 @@ Gem::Specification.new do |spec|
     spec.metadata['bug_tracker_uri'] = 'https://github.com/open-telemetry/opentelemetry-ruby/issues'
     spec.metadata['documentation_uri'] = "https://open-telemetry.github.io/opentelemetry-ruby/opentelemetry-logs-sdk/v#{OpenTelemetry::SDK::Logs::VERSION}"
   end
+
+  spec.post_install_message = "The OTel Logs gems have been released on RubyGems! The log-record-processor3 branch is going away on 13 January 2025. Please update your Gemfile to install `opentelemetry-logs-sdk` directly from RubyGems."
 end
+

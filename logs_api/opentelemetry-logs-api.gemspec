@@ -40,4 +40,7 @@ Gem::Specification.new do |spec|
     spec.metadata['bug_tracker_uri'] = 'https://github.com/open-telemetry/opentelemetry-ruby/issues'
     spec.metadata['documentation_uri'] = "https://open-telemetry.github.io/opentelemetry-ruby/opentelemetry-logs-api/v#{OpenTelemetry::Logs::VERSION}"
   end
+
+  spec.post_install_message = "This code has been released on RubyGems! The log-record-processor3 branch is going away on 13 January 2025. Please update your Gemfiles to install `opentelemetry-logs-api` directly from RubyGems."
 end
+
