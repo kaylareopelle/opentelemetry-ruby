@@ -77,7 +77,7 @@ module OpenTelemetry
         # @return [Integer] the result of the export.
         def export(span_data, timeout: nil)
           return FAILURE if @shutdown
-
+          OpenTelemetry.logger.info("\n*****BEGIN******\nexport span_data: #{span_data}\n*****END********\n")
           send_bytes(encode(span_data), timeout: timeout)
         end
 
@@ -311,6 +311,7 @@ module OpenTelemetry
         end
 
         def as_otlp_span(span_data) # rubocop:disable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+          OpenTelemetry.logger.info("\n*****BEGIN******\nspan_data: #{span_data}\n*****END********\n")
           Opentelemetry::Proto::Trace::V1::Span.new(
             trace_id: span_data.trace_id,
             span_id: span_data.span_id,
@@ -323,6 +324,7 @@ module OpenTelemetry
             attributes: span_data.attributes&.map { |k, v| as_otlp_key_value(k, v) },
             dropped_attributes_count: span_data.total_recorded_attributes - span_data.attributes&.size.to_i,
             events: span_data.events&.map do |event|
+              OpenTelemetry.logger.info("\n*****BEGIN******\nspan_event timestamp: #{event.timestamp}\n*****END********\n")
               Opentelemetry::Proto::Trace::V1::Span::Event.new(
                 time_unix_nano: event.timestamp,
                 name: event.name,
