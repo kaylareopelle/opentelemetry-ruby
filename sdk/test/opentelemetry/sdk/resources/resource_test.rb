@@ -123,6 +123,14 @@ describe OpenTelemetry::SDK::Resources::Resource do
         end
       end
     end
+
+    it 'strips whitespace from keys and values in OTEL_RESOURCE_ATTRIBUTES' do
+      OpenTelemetry::TestHelpers.with_env('OTEL_RESOURCE_ATTRIBUTES' => ' important_foo=x, important_bar=y ') do
+        resource_attributes = Resource.telemetry_sdk.attribute_enumerator.to_h
+        _(resource_attributes['important_foo']).must_equal('x')
+        _(resource_attributes['important_bar']).must_equal('y')
+      end
+    end
   end
 
   describe '.process' do
