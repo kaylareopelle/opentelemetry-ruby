@@ -25,6 +25,7 @@ jobs:
         gem:
           - opentelemetry-api
           - opentelemetry-common
+          - opentelemetry-config
           - opentelemetry-exporter-zipkin
           - opentelemetry-logs-api
           - opentelemetry-logs-sdk
