@@ -42,6 +42,8 @@ module OpenTelemetry
         #
         # @return [OpenTelemetry::SDK::Logs::Logger]
         def logger(name:, version: nil)
+          return OpenTelemetry::Logs::Logger::NOOP_LOGGER if @stopped
+
           version ||= ''
 
           if !name.is_a?(String) || name.empty?
